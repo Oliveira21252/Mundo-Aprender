@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mundo Aprender - Jogo Educativo</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+:root{--bg:#FFF9F0;--card:#fff;--primary:#FF6B35;--secondary:#2EC4B6;--accent:#FFD166;--success:#06D6A0;--error:#EF476F;--text:#2D3436;--muted:#95A5A6;--border:#F0E6D9;--glow:rgba(255,107,53,.15)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.screen{display:none;animation:fadeIn .35s ease}.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-60px)}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(120vh) rotate(720deg);opacity:0}}
+.shake{animation:shake .4s ease}
+.xp-float{position:fixed;pointer-events:none;font-weight:800;font-size:1.2rem;color:var(--accent);animation:floatUp 1.2s ease forwards;z-index:9999}
+.toast-container{position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:12px;font-weight:700;font-size:.9rem;box-shadow:0 4px 20px rgba(0,0,0,.1);animation:slideDown .3s ease;max-width:340px}
+.toast-success{background:var(--success);color:#fff}.toast-error{background:var(--error);color:#fff}.toast-info{background:var(--secondary);color:#fff}
+.card{background:var(--card);border-radius:16px;border:2px solid var(--border);transition:all .25s ease;cursor:pointer}
+.card:hover{transform:translateY(-4px);box-shadow:0 8px 30px var(--glow);border-color:var(--primary)}
+.btn{padding:12px 28px;border-radius:12px;font-weight:800;font-size:1rem;border:none;cursor:pointer;transition:all .2s ease;font-family:inherit;display:inline-flex;align-items:center;gap:8px}
+.btn:active{transform:scale(.95)}.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#e55a28}
+.btn-secondary{background:var(--secondary);color:#fff}.btn-accent{background:var(--accent);color:var(--text)}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--text)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-sm{padding:8px 18px;font-size:.85rem;border-radius:10px}
+.xp-bar{height:10px;background:var(--border);border-radius:99px;overflow:hidden}.xp-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--primary));border-radius:99px;transition:width .6s ease}
+.progress-dot{width:12px;height:12px;border-radius:50%;background:var(--border);transition:all .3s}
+.progress-dot.done{background:var(--success)}.progress-dot.current{background:var(--primary);transform:scale(1.3);box-shadow:0 0 8px var(--primary)}
+.option-btn{width:100%;padding:14px 20px;border-radius:12px;border:2px solid var(--border);background:var(--card);font-weight:700;font-size:1rem;cursor:pointer;transition:all .2s;text-align:left;font-family:inherit}
+.option-btn:hover{border-color:var(--primary);background:rgba(255,107,53,.05)}
+.option-btn.correct{border-color:var(--success);background:rgba(6,214,160,.1);color:var(--success)}
+.option-btn.wrong{border-color:var(--error);background:rgba(239,71,111,.1);color:var(--error)}.option-btn:disabled{cursor:default;opacity:.7}
+.syllable-piece{padding:10px 18px;border-radius:10px;background:var(--accent);font-weight:800;font-size:1.1rem;cursor:grab;transition:all .2s;user-select:none;border:2px solid transparent;display:inline-block;touch-action:none}
+.syllable-piece:hover{transform:scale(1.05)}.syllable-piece.selected{border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,107,53,.3);transform:scale(1.08)}
+.syllable-piece.placed{opacity:.4;pointer-events:none}
+.syllable-piece.dragging{opacity:.5;transform:scale(1.1)}
+.drop-zone{min-width:50px;min-height:44px;border:2px dashed var(--muted);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;transition:all .2s;cursor:pointer}
+.drop-zone.filled{border-style:solid;border-color:var(--success);background:rgba(6,214,160,.08)}
+.drop-zone.drag-over{border-color:var(--primary);background:rgba(255,107,53,.12);border-style:solid;transform:scale(1.05)}
+.hint-box{background:rgba(255,209,102,.15);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:14px 18px;font-size:.95rem;line-height:1.5;animation:slideDown .3s ease}
+.tab-btn{padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s;border:2px solid var(--border);background:var(--card);font-family:inherit;font-size:.85rem}
+.tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}.tab-btn:hover:not(.active){border-color:var(--primary);color:var(--primary)}
+.confetti-piece{position:fixed;top:-10px;width:10px;height:10px;border-radius:2px;animation:confetti 2.5s ease forwards;z-index:99999;pointer-events:none}
+input[type="text"],input[type="number"]{padding:12px 18px;border-radius:12px;border:2px solid var(--border);font-family:inherit;font-size:1.1rem;font-weight:600;outline:none;transition:border-color .2s;background:var(--card);width:100%}
+input:focus{border-color:var(--primary)}
+.star{color:var(--border);font-size:1.5rem;transition:color .3s}.star.filled{color:var(--accent)}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;font-size:.8rem;font-weight:800}
+.info-box{background:rgba(46,196,182,.08);border-left:4px solid var(--secondary);border-radius:0 12px 12px 0;padding:14px 18px;font-size:.9rem;line-height:1.6;margin-bottom:16px}
+.info-box strong{color:var(--secondary)}
+.ort-info{background:rgba(255,209,102,.12);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 16px;font-size:.88rem;line-height:1.55;margin-bottom:12px}
+.ort-info b{color:var(--primary)}
+.drag-ghost{position:fixed;pointer-events:none;z-index:99999;padding:10px 18px;border-radius:10px;background:var(--primary);color:#fff;font-weight:800;font-size:1.1rem;box-shadow:0 8px 25px rgba(0,0,0,.2);transform:translate(-50%,-50%);white-space:nowrap}
+@media(max-width:640px){.btn{padding:10px 20px;font-size:.9rem}.syllable-piece{padding:8px 14px;font-size:1rem}.option-btn{padding:12px 16px;font-size:.9rem}.tab-btn{padding:8px 12px;font-size:.78rem}}
+.bg-pattern{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle at 20% 80%,rgba(255,107,53,.04) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(46,196,182,.04) 0%,transparent 50%),radial-gradient(circle at 50% 50%,rgba(255,209,102,.03) 0%,transparent 60%)}
+</style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<div class="toast-container" id="toastContainer"></div>
+<header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[var(--border)]">
+<div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<button onclick="showScreen('home')" class="text-[var(--primary)] text-xl" id="backBtn" style="display:none"><i class="fas fa-arrow-left"></i></button>
+<div class="flex items-center gap-2"><div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] flex items-center justify-center text-white font-black text-sm">MA</div><span class="font-black text-lg hidden sm:block">Mundo Aprender</span></div>
+</div>
+<div class="flex items-center gap-4">
+<div class="badge bg-[rgba(255,107,53,.1)] text-[var(--primary)]"><i class="fas fa-trophy"></i> <span id="levelText">1</span></div>
+<div class="flex items-center gap-2 min-w-[140px]"><div class="xp-bar flex-1"><div class="xp-fill" id="xpFill" style="width:0%"></div></div><span class="text-xs font-bold text-[var(--muted)]" id="xpText">0</span></div>
+<div class="badge bg-[rgba(239,71,111,.1)] text-[var(--error)]"><i class="fas fa-fire"></i> <span id="streakText">0</span></div>
+</div></div></header>
+
+<main class="max-w-5xl mx-auto px-4 py-6 relative z-10">
+<section class="screen active" id="screen-home"><div class="text-center mb-8"><h1 class="text-3xl sm:text-4xl font-black mb-2">Bem-vindo ao <span style="color:var(--primary)">Mundo Aprender</span></h1><p class="text-[var(--muted)] font-semibold text-lg">Escolha um desafio e comece a evoluir</p></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="modeGrid"></div></section>
+
+<section class="screen" id="screen-tabuada"><h2 class="text-2xl font-black mb-1">Tabuada</h2><p class="text-[var(--muted)] font-semibold mb-6">Selecione uma tabuada para praticar.</p><div class="grid grid-cols-2 sm:grid-cols-5 gap-4" id="tabuadaGrid"></div></section>
+<section class="screen" id="screen-tabuada-play"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-3"><span class="badge bg-[var(--primary)] text-white" id="tbRoundBadge">Rodada 1/10</span><span class="badge bg-[var(--secondary)] text-white" id="tbScoreBadge">0/10</span></div><button class="btn btn-outline btn-sm" onclick="Tabuada.showHint()"><i class="fas fa-lightbulb"></i> Dica</button></div><div id="tbHintArea" class="mb-4" style="display:none"></div><div class="card p-8 text-center mb-6"><div class="text-5xl sm:text-6xl font-black mb-6" id="tbQuestion">7 x 8 = ?</div><div class="max-w-xs mx-auto flex gap-3"><input type="number" id="tbInput" class="text-center text-2xl font-black" placeholder="?" autocomplete="off"><button class="btn btn-primary" onclick="Tabuada.check()"><i class="fas fa-check"></i></button></div></div><div class="flex justify-center gap-2 flex-wrap" id="tbDots"></div></section>
+
+<section class="screen" id="screen-leitura"><h2 class="text-2xl font-black mb-1">Leitura com Audio</h2><p class="text-[var(--muted)] font-semibold mb-5">Ouca o texto e responda</p><div class="flex gap-2 mb-5 flex-wrap"><button class="tab-btn active" onclick="Leitura.filterLang('all',this)">Todos</button><button class="tab-btn" onclick="Leitura.filterLang('pt',this)">Portugues</button><button class="tab-btn" onclick="Leitura.filterLang('en',this)">Ingles</button><button class="tab-btn" onclick="Leitura.filterLang('es',this)">Espanhol</button></div><div class="grid gap-4" id="leituraGrid"></div></section>
+<section class="screen" id="screen-leitura-play"><div class="flex items-center justify-between mb-4"><span class="badge bg-[var(--secondary)] text-white" id="lrLangBadge">PT</span><button class="btn btn-outline btn-sm" onclick="Leitura.speak()"><i class="fas fa-volume-up"></i> Ouvir</button></div><div class="card p-6 mb-5"><h3 class="font-black text-xl mb-3" id="lrTitle"></h3><p class="leading-relaxed text-lg" id="lrText" style="color:#444"></p></div><div id="lrQuestions"></div><button class="btn btn-primary mt-5" id="lrFinishBtn" onclick="Leitura.finish()" style="display:none"><i class="fas fa-flag-checkered"></i> Finalizar</button></section>
+
+<section class="screen" id="screen-geral"><h2 class="text-2xl font-black mb-1">Conhecimentos Gerais</h2><p class="text-[var(--muted)] font-semibold mb-6">Perguntas por materia. Embaralham a cada rodada!</p><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="geralGrid"></div></section>
+<section class="screen" id="screen-geral-play"><div class="flex items-center justify-between mb-4"><span class="badge bg-[var(--primary)] text-white" id="gjSubject"></span><span class="badge bg-[var(--secondary)] text-white" id="gjProgress"></span></div><div class="card p-6 mb-5"><p class="text-xl font-bold" id="gjQuestion"></p></div><div class="grid gap-3" id="gjOptions"></div></section>
+
+<section class="screen" id="screen-arrasta"><h2 class="text-2xl font-black mb-1">Arrasta e Solta</h2><p class="text-[var(--muted)] font-semibold mb-3">Monte palavras e desafios linguisticos</p><div class="flex gap-2 mb-4 flex-wrap" id="arrastaTabs"></div><div id="arrastaInfo" class="mb-4"></div><div id="arrastaFeedback" class="mb-3"></div><div id="arrastaPlayArea"></div><div class="flex gap-3 mt-5"><button class="btn btn-primary" onclick="Arrasta.next()"><i class="fas fa-forward"></i> Proxima</button><button class="btn btn-outline" onclick="Arrasta.reset()"><i class="fas fa-redo"></i> Refazer</button></div></section>
+
+<section class="screen" id="screen-frutas"><h2 class="text-2xl font-black mb-1">Frutas em Ingles</h2><p class="text-[var(--muted)] font-semibold mb-5">Veja a fruta e escreva o nome em ingles</p><div class="card p-8 text-center mb-5"><div class="text-7xl mb-4" id="fruitEmoji"></div><div class="text-sm font-bold text-[var(--muted)] mb-3" id="fruitHint"></div><div class="max-w-xs mx-auto flex gap-3"><input type="text" id="fruitInput" placeholder="Type in English..." autocomplete="off" style="text-transform:lowercase"><button class="btn btn-primary" onclick="Frutas.check()"><i class="fas fa-check"></i></button></div></div><div class="flex items-center justify-between"><span class="badge bg-[var(--secondary)] text-white" id="fruitScore"></span><button class="btn btn-outline btn-sm" onclick="Frutas.hint()"><i class="fas fa-lightbulb"></i> Dica</button></div></section>
+
+<section class="screen" id="screen-numeros"><h2 class="text-2xl font-black mb-1">Numeros em Idiomas</h2><p class="text-[var(--muted)] font-semibold mb-5">Veja o numero e escolha como se escreve</p><div class="flex gap-2 mb-5"><button class="tab-btn active" onclick="Numeros.setLang('en',this)">Ingles</button><button class="tab-btn" onclick="Numeros.setLang('es',this)">Espanhol</button></div><div class="card p-8 text-center mb-5"><div class="text-6xl font-black mb-2" id="numDisplay" style="color:var(--primary)">42</div><div class="text-sm font-bold text-[var(--muted)]" id="numLangLabel">Escolha em Ingles</div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="numOptions"></div><div class="flex items-center justify-between mt-5"><span class="badge bg-[var(--secondary)] text-white" id="numScore"></span><button class="btn btn-primary btn-sm" onclick="Numeros.next()"><i class="fas fa-forward"></i> Proximo</button></div></section>
+
+<section class="screen" id="screen-ortografia"><h2 class="text-2xl font-black mb-1">Ortografia</h2><p class="text-[var(--muted)] font-semibold mb-4">Aprenda quando usar SS, S, C, Ç, R, RR, SC, M, N</p><div class="flex gap-2 mb-4 flex-wrap" id="ortografiaTabs"></div><div id="ortografiaInfo" class="mb-4"></div><div id="ortografiaPlayArea"></div><div class="flex gap-3 mt-5"><button class="btn btn-primary" onclick="Ortografia.next()"><i class="fas fa-forward"></i> Proxima</button></div></section>
+
+<section class="screen" id="screen-porque"><h2 class="text-2xl font-black mb-1">Porque / Por que / Porquê / Por quê</h2><p class="text-[var(--muted)] font-semibold mb-4">Aprenda a diferenca entre os quatro</p><div class="info-box" id="porqueInfoBox"></div><div id="porquePlayArea"></div><div class="flex gap-3 mt-5"><button class="btn btn-primary" onclick="Porque.next()"><i class="fas fa-forward"></i> Proxima</button></div></section>
+
+<section class="screen" id="screen-idiomas"><h2 class="text-2xl font-black mb-1">Alfabetos em Idiomas</h2><p class="text-[var(--muted)] font-semibold mb-4">Japones, Frances, Italiano e Libras</p><div class="flex gap-2 mb-4 flex-wrap" id="idiomasTabs"></div><div id="idiomasInfo" class="mb-4"></div><div id="idiomasPlayArea"></div><div class="flex gap-3 mt-5"><button class="btn btn-primary" onclick="Idiomas.next()"><i class="fas fa-forward"></i> Proxima</button></div></section>
+
+<section class="screen" id="screen-result"><div class="card p-8 text-center max-w-md mx-auto"><div class="text-6xl mb-4" id="resultIcon"></div><h2 class="text-2xl font-black mb-2" id="resultTitle"></h2><p class="text-[var(--muted)] font-semibold mb-4" id="resultDesc"></p><div class="flex justify-center gap-1 mb-4" id="resultStars"></div><div class="text-3xl font-black mb-1" style="color:var(--accent)" id="resultXP"></div><p class="text-sm text-[var(--muted)] mb-6">XP ganho nesta atividade</p><div class="flex gap-3 justify-center"><button class="btn btn-primary" id="resultContinue"><i class="fas fa-forward"></i> Continuar</button><button class="btn btn-outline" id="resultRetry" style="display:none"><i class="fas fa-redo"></i> Tentar de novo</button></div></div></section>
+</main>
+
+<script>
+/* ===== ESTADO ===== */
+const DS={xp:0,level:1,streak:0,bestStreak:0,tabuada:{},geral:{},leitura:0,arrasta:0,frutas:0,numeros:0,ortografia:0,porque:0,idiomas:0};
+let state=JSON.parse(JSON.stringify(DS));
+function saveState(){try{localStorage.setItem('mundoAprender',JSON.stringify(state))}catch(e){}}
+function loadState(){try{const s=localStorage.getItem('mundoAprender');if(s){Object.assign(state,JSON.parse(s))}}catch(e){}}
+function xpForLevel(l){return l*120}
+function addXP(a,x,y){state.xp+=a;while(state.xp>=xpForLevel(state.level)){state.xp-=xpForLevel(state.level);state.level++;showToast('Nivel '+state.level+'!','success');spawnConfetti();playSound('levelup')}updateTopBar();saveState();if(x!==undefined)showXPFloat(a,x,y)}
+function addStreak(){state.streak++;if(state.streak>state.bestStreak)state.bestStreak=state.streak;updateTopBar();saveState()}
+function resetStreak(){state.streak=0;updateTopBar();saveState()}
+function updateTopBar(){document.getElementById('levelText').textContent=state.level;document.getElementById('xpText').textContent=state.xp+'/'+xpForLevel(state.level);document.getElementById('xpFill').style.width=(state.xp/xpForLevel(state.level)*100)+'%';document.getElementById('streakText').textContent=state.streak}
+
+/* ===== FUNCAO HELPER: Embaralhar opcoes mantendo resposta correta ===== */
+function shuffleOpts(opts,correctIdx){const arr=opts.map((t,i)=>({t,c:i===correctIdx}));for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return{o:arr.map(x=>x.t),a:arr.findIndex(x=>x.c)}}
+
+/* ===== AUDIO ===== */
+let audioCtx;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx}
+function playSound(t){try{const c=getAC(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);g.gain.value=0.12;const n=c.currentTime;if(t==='correct'){o.frequency.setValueAtTime(523,n);o.frequency.setValueAtTime(659,n+.1);o.frequency.setValueAtTime(784,n+.2);g.gain.exponentialRampToValueAtTime(.001,n+.4);o.start(n);o.stop(n+.4)}else if(t==='wrong'){o.frequency.setValueAtTime(330,n);o.frequency.setValueAtTime(262,n+.15);g.gain.exponentialRampToValueAtTime(.001,n+.35);o.start(n);o.stop(n+.35)}else if(t==='click'){o.frequency.setValueAtTime(800,n);g.gain.setValueAtTime(.06,n);g.gain.exponentialRampToValueAtTime(.001,n+.05);o.start(n);o.stop(n+.05)}else if(t==='levelup'){o.frequency.setValueAtTime(523,n);o.frequency.setValueAtTime(659,n+.12);o.frequency.setValueAtTime(784,n+.24);o.frequency.setValueAtTime(1047,n+.36);g.gain.exponentialRampToValueAtTime(.001,n+.6);o.start(n);o.stop(n+.6)}}catch(e){}}
+
+/* ===== NAVEGACAO ===== */
+let currentScreen='home',prevScreen='home';
+function showScreen(id,skip){playSound('click');if(id!=='home'&&!skip)prevScreen=currentScreen;document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+id).classList.add('active');document.getElementById('backBtn').style.display=id==='home'?'none':'inline-flex';currentScreen=id;window.scrollTo({top:0,behavior:'smooth'})}
+document.getElementById('backBtn').addEventListener('click',()=>showScreen(prevScreen));
+
+/* ===== TOAST ===== */
+function showToast(m,t){const c=document.getElementById('toastContainer'),e=document.createElement('div');e.className='toast toast-'+(t||'info');e.textContent=m;c.appendChild(e);setTimeout(()=>{e.style.opacity='0';e.style.transition='opacity .3s';setTimeout(()=>e.remove(),300)},2500)}
+function showXPFloat(a,x,y){const e=document.createElement('div');e.className='xp-float';e.textContent='+'+a+' XP';e.style.left=x+'px';e.style.top=y+'px';document.body.appendChild(e);setTimeout(()=>e.remove(),1300)}
+function spawnConfetti(){const c=['#FF6B35','#2EC4B6','#FFD166','#06D6A0','#EF476F','#fff'];for(let i=0;i<40;i++){const e=document.createElement('div');e.className='confetti-piece';e.style.left=Math.random()*100+'vw';e.style.background=c[Math.floor(Math.random()*c.length)];e.style.animationDelay=Math.random()*.8+'s';e.style.animationDuration=(2+Math.random()*1.5)+'s';e.style.width=(6+Math.random()*8)+'px';e.style.height=(6+Math.random()*8)+'px';e.style.borderRadius=Math.random()>.5?'50%':'2px';document.body.appendChild(e);setTimeout(()=>e.remove(),4000)}}
+
+/* ===== RESULTADO ===== */
+function showResult(cor,tot,retryFn,contFn){const p=cor/tot;let ic,ti,de,st;if(p>=.9){ic='<i class="fas fa-crown" style="color:var(--accent)"></i>';ti='Excelente!';de='Desempenho incrivel!';st=3}else if(p>=.7){ic='<i class="fas fa-star" style="color:var(--accent)"></i>';ti='Muito Bem!';de='Bom trabalho!';st=2}else if(p>=.5){ic='<i class="fas fa-thumbs-up" style="color:var(--secondary)"></i>';ti='Bom!';de='Voce esta progredindo!';st=1}else{ic='<i class="fas fa-book-open" style="color:var(--muted)"></i>';ti='Continue Estudando';de='Pratique mais!';st=0}const xp=cor*10+Math.floor(state.streak*2);document.getElementById('resultIcon').innerHTML=ic;document.getElementById('resultTitle').textContent=ti;document.getElementById('resultDesc').textContent=de;document.getElementById('resultXP').textContent='+'+xp+' XP';const sEl=document.getElementById('resultStars');sEl.innerHTML='';for(let i=0;i<3;i++){const s=document.createElement('i');s.className='fas fa-star star'+(i<st?' filled':'');sEl.appendChild(s)}const rb=document.getElementById('resultRetry'),cb=document.getElementById('resultContinue');if(p<.7&&retryFn){rb.style.display='inline-flex';rb.onclick=()=>{showScreen(prevScreen,true);retryFn()}}else rb.style.display='none';cb.onclick=()=>{addXP(xp);showScreen('home');if(contFn)contFn()};if(p>=.9)spawnConfetti();showScreen('result',true)}
+
+/* ===== TABUADA ===== */
+const Tabuada={table:1,round:0,questions:[],qIdx:0,correct:0,hintUsed:false,
+init(){const g=document.getElementById('tabuadaGrid');g.innerHTML='';for(let t=1;t<=10;t++){const p=state.tabuada[t]||0,d=p>=10,div=document.createElement('div');div.className='card p-5 text-center';if(d)div.style.borderColor='var(--success)';div.innerHTML=`<div class="text-3xl font-black mb-1" style="color:${d?'var(--success)':'var(--primary)'}">${t}x</div><div class="text-sm font-bold text-[var(--muted)]">${d?'Completo!':'Rodada '+(p+1)+'/10'}</div><div class="xp-bar mt-2"><div class="xp-fill" style="width:${p*10}%;background:${d?'var(--success)':''}"></div></div>`;div.onclick=()=>this.start(t);g.appendChild(div)}},
+start(t){this.table=t;this.round=state.tabuada[t]||0;this.genRound();showScreen('tabuada-play')},
+genRound(){this.questions=[];const n=[1,2,3,4,5,6,7,8,9,10];for(let i=n.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[n[i],n[j]]=[n[j],n[i]]}n.forEach(x=>this.questions.push({a:this.table,b:x,answer:this.table*x}));this.qIdx=0;this.correct=0;this.hintUsed=false;this.render()},
+render(){const q=this.questions[this.qIdx];document.getElementById('tbRoundBadge').textContent='Rodada '+(this.round+1)+'/10';document.getElementById('tbScoreBadge').textContent=this.correct+'/'+10;document.getElementById('tbQuestion').textContent=q.a+' x '+q.b+' = ?';document.getElementById('tbInput').value='';document.getElementById('tbHintArea').style.display='none';document.getElementById('tbInput').focus();const d=document.getElementById('tbDots');d.innerHTML='';this.questions.forEach((_,i)=>{const e=document.createElement('div');e.className='progress-dot'+(i<this.qIdx?(this.questions[i]._ok?' done':''):'')+(i===this.qIdx?' current':'');if(i<this.qIdx&&!this.questions[i]._ok)e.style.background='var(--error)';d.appendChild(e)})},
+showHint(){const q=this.questions[this.qIdx];this.hintUsed=true;const h=[];h.push('Conte de '+q.a+' em '+q.a+', '+q.b+' vezes: '+Array.from({length:q.b},(_,i)=>(i+1)*q.a).join(', '));if(q.b>2){const p=Math.floor(q.b/2),r=q.b-p;h.push(q.a+'x'+q.b+' = '+q.a+'x'+p+' + '+q.a+'x'+r+' = '+(q.a*p)+' + '+(q.a*r))}if(q.b>1)h.push('Se '+q.a+'x'+(q.b-1)+' = '+q.a*(q.b-1)+', some +'+q.a);const a=document.getElementById('tbHintArea');a.style.display='block';a.innerHTML='<div class="hint-box"><i class="fas fa-lightbulb" style="color:var(--accent)"></i> '+h[Math.floor(Math.random()*h.length)]+'</div>'},
+check(){const q=this.questions[this.qIdx],inp=document.getElementById('tbInput'),v=parseInt(inp.value);if(isNaN(v)){inp.classList.add('shake');setTimeout(()=>inp.classList.remove('shake'),400);return}if(v===q.answer){q._ok=true;this.correct++;addStreak();playSound('correct');const r=inp.getBoundingClientRect();showXPFloat(this.hintUsed?5:10,r.left,r.top-20)}else{q._ok=false;resetStreak();playSound('wrong');showToast('Resposta: '+q.answer,'error');inp.classList.add('shake');setTimeout(()=>inp.classList.remove('shake'),400)}this.qIdx++;if(this.qIdx>=10)setTimeout(()=>this.finish(),600);else setTimeout(()=>this.render(),400)},
+finish(){if(this.correct>=8){state.tabuada[this.table]=(state.tabuada[this.table]||0)+1;saveState()}showResult(this.correct,10,()=>this.genRound(),this.correct>=8?()=>this.init():null)}};
+document.getElementById('tbInput').addEventListener('keydown',e=>{if(e.key==='Enter')Tabuada.check()});
+
+/* ===== LEITURA ===== */
+const readings=[
+{title:'O Sistema Solar',lang:'pt',text:'O sistema solar e composto pelo Sol e oito planetas: Mercurio, Venus, Terra, Marte, Jupiter, Saturno, Urano e Netuno. Jupiter e o maior e tem uma mancha vermelha que e uma tempestade gigante.',questions:[{q:'Quantos planetas existem?',o:['Seis','Sete','Oito','Nove'],a:2},{q:'Qual e o maior planeta?',o:['Saturno','Jupiter','Netuno','Urano'],a:1},{q:'O que e a mancha vermelha?',o:['Vulcao','Oceano','Tempestade','Montanha'],a:2}]},
+{title:'The Water Cycle',lang:'en',text:'The water cycle is the continuous movement of water on Earth. Water evaporates from oceans, forms clouds, and falls back as rain or snow. This process is essential for all life.',questions:[{q:'What evaporates from oceans?',o:['Oil','Water','Sand','Air'],a:1},{q:'What forms in the sky?',o:['Stars','Clouds','Rainbows','Lightning'],a:1},{q:'What can water fall back as?',o:['Fire','Rain or snow','Stones','Wind'],a:1}]},
+{title:'El Cuerpo Humano',lang:'es',text:'El cuerpo humano tiene 206 huesos, mas de 600 musculos y unos 5 litros de sangre. El corazon late unas 100 mil veces al dia. El cerebro es el organo mas complejo.',questions:[{q:'Cuantos huesos tiene?',o:['106','206','306','406'],a:1},{q:'Cuantos litros de sangre?',o:['2','3','5','10'],a:2},{q:'Cual es el organo mas complejo?',o:['Corazon','Higado','Cerebro','Pulmones'],a:2}]},
+{title:'A Floresta Amazonica',lang:'pt',text:'A Floresta Amazonica e a maior floresta tropical do mundo com cerca de 5,5 milhoes de km2. Abriga 10% das especies conhecidas e e chamada de pulmao do mundo.',questions:[{q:'Qual e a maior floresta tropical?',o:['Congo','Amazonica','Taiga','Daintree'],a:1},{q:'Quantos km2 cobre?',o:['1 mi','3 mi','5,5 mi','10 mi'],a:2},{q:'Por que e pulmao do mundo?',o:['Grande','Produz oxigenio','Muitas arvores','Na America'],a:1}]},
+{title:'Animals in the Ocean',lang:'en',text:'The ocean is home to millions of species. The blue whale is the largest animal ever. Octopuses can change color. Coral reefs are called rainforests of the sea.',questions:[{q:'Largest animal ever?',o:['Shark','Blue whale','Elephant','T-rex'],a:1},{q:'What can octopuses do?',o:['Fly','Change color','Sing','Run fast'],a:1},{q:'Coral reefs are called?',o:['Deserts','Rainforests of the sea','Mountains','Cities'],a:1}]},
+{title:'Los Volcanes',lang:'es',text:'Los volcanes son aberturas en la corteza terrestre por donde sale magma. Existen activos, inactivos y extintos. El mas alto del mundo esta en Chile y Argentina.',questions:[{q:'Que sale de los volcanes?',o:['Agua','Magma y gases','Plantas','Hielo'],a:1},{q:'Cuantos tipos existen?',o:['Dos','Tres','Cuatro','Cinco'],a:1},{q:'Donde esta el mas alto?',o:['Mexico','Peru','Chile y Argentina','Brasil'],a:2}]},
+];
+const Leitura={current:null,answers:[],langFilter:'all',
+init(){this.renderList()},
+filterLang(l,b){this.langFilter=l;b.parentElement.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');this.renderList()},
+renderList(){const g=document.getElementById('leituraGrid');g.innerHTML='';const f=this.langFilter==='all'?readings:readings.filter(r=>r.lang===this.langFilter);const ll={pt:'Portugues',en:'Ingles',es:'Espanhol'},lc={pt:'var(--primary)',en:'var(--secondary)',es:'var(--accent)'};f.forEach(r=>{const idx=readings.indexOf(r),d=document.createElement('div');d.className='card p-5 flex items-center gap-4';d.innerHTML=`<div class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg" style="background:${lc[r.lang]}">${r.lang.toUpperCase()}</div><div class="flex-1"><div class="font-bold">${r.title}</div><div class="text-sm text-[var(--muted)]">${ll[r.lang]} - ${r.questions.length} perguntas</div></div><i class="fas fa-chevron-right text-[var(--muted)]"></i>`;d.onclick=()=>this.start(idx);g.appendChild(d)})},
+start(i){this.current=readings[i];this.answers=new Array(this.current.questions.length).fill(-1);document.getElementById('lrLangBadge').textContent=this.current.lang.toUpperCase();document.getElementById('lrTitle').textContent=this.current.title;document.getElementById('lrText').textContent=this.current.text;document.getElementById('lrFinishBtn').style.display='none';const g=document.getElementById('lrQuestions');g.innerHTML='';this.current.questions.forEach((q,i)=>{const d=document.createElement('div');d.className='mb-4';d.innerHTML=`<p class="font-bold mb-2">${i+1}. ${q.q}</p><div class="grid gap-2" id="lrQ${i}"></div>`;g.appendChild(d);const og=d.querySelector('#lrQ'+i);const sh=shuffleOpts(q.o,q.a);q._shuffled=sh.o;q._shuffledA=sh.a;sh.o.forEach((o,j)=>{const b=document.createElement('button');b.className='option-btn';b.textContent=o;b.onclick=()=>this.answer(i,j);og.appendChild(b)})});showScreen('leitura-play');setTimeout(()=>this.speak(),500)},
+speak(){const u=new SpeechSynthesisUtterance(this.current.text);u.lang={pt:'pt-BR',en:'en-US',es:'es-ES'}[this.current.lang]||'pt-BR';u.rate=0.85;speechSynthesis.cancel();speechSynthesis.speak(u)},
+answer(qi,oi){this.answers[qi]=oi;const g=document.getElementById('lrQ'+qi);g.querySelectorAll('.option-btn').forEach((b,j)=>{b.disabled=true;if(j===this.current.questions[qi]._shuffledA)b.classList.add('correct');if(j===oi&&oi!==this.current.questions[qi]._shuffledA)b.classList.add('wrong')});if(this.answers.every(a=>a>=0))document.getElementById('lrFinishBtn').style.display='inline-flex'},
+finish(){speechSynthesis.cancel();let c=0;this.answers.forEach((a,i)=>{if(a===this.current.questions[i]._shuffledA)c++});showResult(c,this.current.questions.length,()=>this.start(readings.indexOf(this.current)),()=>{state.leitura++;saveState();this.renderList()})}};
+
+/* ===== CONHECIMENTOS GERAIS ===== */
+function qp(q,a,b,c,d,r){return{q,o:[a,b,c,d],a:r}}
+
+const geralData={
+ciencias:{name:'Ciencias',icon:'fa-flask',color:'var(--primary)',questions:[
+qp('Unidade de forca?','Watt','Newton','Joule','Pascal',1),qp('Velocidade da luz?','300 km/s','300.000 km/s','3.000 km/s','30.000 km/s',1),qp('Simbolo quimico da agua?','H2O','CO2','O2','NaCl',0),
+qp('O que e um atomo?','Molecula grande','Menor particula de um elemento','Tipo de energia','Uma celula',1),qp('Forca que atrai para o centro da Terra?','Magnetismo','Gravidade','Eletricidade','Atrito',1),
+qp('Liquido vira gas?','Solidificacao','Condensacao','Evaporacao','Fusao',2),qp('Energia cinetica?','Em repouso','Do movimento','Solar','Termica',1),qp('Planeta mais quente?','Mercurio','Venus','Marte','Jupiter',1),
+qp('Eclipse solar?','Lua entre Terra e Sol','Terra entre Lua e Sol','Sol se apaga','Lua some',0),qp('Mede temperatura?','Barometro','Termometro','Velocimetro','Ampereimetro',1),
+qp('Agua a 0 graus?','Evapora','Congela','Ferve','Nada muda',1),qp('Formula da densidade?','d=m/v','d=v/m','d=m*v','d=m+v',0),qp('Ondas sonoras?','Ondas de luz','Vibracoes no ar','Ondas do mar','Radiacao',1),
+qp('Estado natural do ferro?','Gas','Liquido','Solido','Plasma',2),qp('Fotossintese?','Respiracao','Plantas usam luz para alimento','Movimento','Crescimento',1),
+qp('Reacao quimica?','Mudanca de estado','Transformacao de substancias','Mistura','Aquecimento',1),qp('Gas mais abundante na atmosfera?','Oxigenio','Nitrogenio','Carbono','Helio',1),
+qp('Efeito estufa?','Resfriamento','Retencao de calor','Auroras','Tipo de chuva',1),qp('Unidade de pressao?','Newton','Pascal','Watt','Ampere',1),
+qp('Ecossistema?','Um animal','Seres vivos e ambiente','Uma planta','Um rio',1),qp('Simbolo quimico do ouro?','Ag','Fe','Au','Cu',2),
+qp('Ima atrai?','Madeira','Metais','Repele tudo','So eletrico',1),qp('Solido vira liquido?','Evaporacao','Condensacao','Fusao','Solidificacao',2),
+qp('Camada de ozonio?','Solo','Protege dos raios UV','Nuvens','Gelo',1),qp('Menor particula de substancia?','Atomo','Molecula','Eletron','Proton',0),
+qp('Condutividade eletrica?','Conduz calor','Conduz eletricidade','Conduz som','Conduz luz',1),qp('Ponto de ebulicao da agua?','50','75','100','120',2),
+qp('Fossil?','Pedra comum','Resto de ser vivo','Mineral','Cristal',1),qp('Gravidade?','Forca magnetica','Atracao entre massas','Forca eletrica','Nuclear',1),
+qp('Simbolo do ferro?','Fe','Ir','Fi','Fr',0),qp('Planeta rochoso?','De gas','Superficie solida','De gelo','De agua',1),
+qp('Fonte primaria de energia na Terra?','Vento','Sol','Agua','Carvao',1),qp('Bateria armazena?','Energia eletrica','Som','Calor','Agua',0),
+qp('pH da agua pura?','0','5','7','14',2),qp('Terremoto?','Erupcao','Vibracao da crosta','Maremoto','Tornado',1),
+qp('Lei da inercia?','Corpo em repouso permanece','Acao e reacao','Forca e massa','Energia',0),qp('Combustao?','Reacao com O2 libera calor','Reacao com agua','Resfriamento','Dissolucao',0),
+qp('Planeta mais proximo do Sol?','Venus','Terra','Mercurio','Marte',2),qp('Polimero?','Metal pesado','Molecula grande de unidades repetidas','Tipo de gas','Mineral',1),
+qp('Pressao atmosferica?','Peso do ar','Forca da agua','Das plantas','Do vento',0),qp('Velocidade do som no ar?','100','340','1000','3000',1),
+qp('Reflexao da luz?','Atravessa','Volta ao rebater','Desaparece','Muda de cor',1),qp('Unidade de energia?','Newton','Pascal','Joule','Volt',2),
+qp('Satelite natural?','Artificial','Lua de planeta','Estrela','Cometa',1),qp('Metamorfismo?','Transforma rochas por calor e pressao','Forma vulcoes','Erosao','Fossil',0),
+qp('Elemento mais abundante no universo?','Oxigenio','Carbono','Helio','Hidrogenio',3),qp('Magnetismo?','Forca entre imas','Gravidade','Energia solar','Pressao do ar',0),
+qp('Moleculas?','Atomos isolados','Uniao de atomos','Celulas','Eletrons',1),qp('Maior satelite natural?','Lua','Europa','Ganimedes','Tita',2),
+qp('Isolamento termico?','Impede passagem de calor','Gera calor','Mede temperatura','Absorve calor',0),qp('Planeta com aneis?','Jupiter','Marte','Saturno','Venus',2),
+qp('Lente convexa?','Diverge luz','Concentra luz','Opaca','Plana',1),qp('Estado das estrelas?','Solido','Liquido','Gas','Plasma',3),
+qp('Cadeia alimentar?','Quem come quem','Tipo de rede','Processo quimico','Ciclo da agua',0),qp('Unidade de potencia?','Joule','Watt','Volt','Ampere',1),
+qp('Cometa?','Asteroide','Corpo com cauda de po','Planeta anao','Estrela',1),qp('Condensacao?','Gas vira liquido','Liquido vira gas','Solido vira gas','Liquido vira solido',0),
+qp('Metal mais leve?','Aluminio','Litio','Ferro','Ouro',1),qp('Circuito eletrico?','Caminho da eletricidade','Estrada','Rede de agua','Sistema solar',0),
+qp('Onda eletromagnetica?','Precisa de meio','Viaja no vacuo','Onda sonora','Onda do mar',1),qp('Temperatura do Sol na superficie?','1.000','5.500','10.000','100',1),
+qp('Biodegradavel?','Nao se decompoe','Se decompoe na natureza','Feito de plastico','Dura para sempre',1),qp('Asteroide?','Corpo rochoso que orbita o Sol','Estrela','Cometa','Planeta',0),
+qp('Principal componente do ar respirado?','Nitrogenio','Oxigenio','CO2','Helio',1),qp('Refracao?','Desvio da luz ao mudar de meio','Reflexao','Absorcao','Emissao',0),
+qp('Usina hidreletrica?','Energia da agua','Do sol','Do vento','Nuclear',0),qp('Camada mais externa da Terra?','Manto','Nucleo','Crosta','Astenosfera',2),
+qp('Sublimacao?','Solido vira gas direto','Gas vira liquido','Liquido vira solido','Gas vira solido',0),qp('Energia potencial?','Do movimento','Armazenada por posicao','Sonora','Luminosa',1),
+qp('Simbolo do carbono?','Ca','Co','C','Cr',2),qp('Dia mais longo de um planeta?','Jupiter','Saturno','Venus','Marte',2),
+qp('Energia nuclear?','Do nucleo de atomos','Do sol','Do vento','Da agua',0),qp('Mineral?','Organico','Inorganico natural solido','Tipo de gas','Liquido',1),
+qp('Poluicao sonora?','Sujeira no ar','Excesso de ruido','Agua contaminada','Visual',1),qp('Terceira lei de Newton?','Inercia','Forca e massa','Acao e reacao','Energia',2),
+qp('Chuva acida?','Normal','Com poluentes que acidificam','De gelo','Com sal',1),qp('Orbita?','Caminho curvo de um corpo','Linha reta','Ponto','Estrela',0),
+qp('Ponto de fusao do gelo?','-10','0','10','100',1),qp('Liquido denso?','Leve','Muita massa por volume','Quente','Transparente',1),
+qp('Raios X?','Ondas de radio','Radiacao penetrante','Luz visivel','Som agudo',1),qp('Sustentabilidade?','Usar recursos sem esgotar','Consumir muito','Produzir lixo','Queimar',0),
+qp('Buraco negro?','Gravidade tao forte que nem a luz escapa','Buraco na Terra','Estrela apagada','Planeta escuro',0),qp('Telescopio?','Ver objetos distantes','Microrganismos','Temperatura','Sons',0),
+qp('Conservacao de energia?','Nao se cria nem se destroi','Cria do nada','Some','E infinita',1),qp('Periodo de rotacao da Terra?','12h','24h','36h','48h',1),
+qp('Desintegracao radioativa?','Decaimento de nucleos','Explosao quimica','Fusao','Reacao com agua',0),qp('Nanotecnologia?','Escala nanometrica','Espacial','Pontes','Agricola',0),
+qp('Principal componente do petroleo?','Agua','Hidrocarbonetos','Oxigenio','Silicio',1),qp('Radar?','Ondas de radio para detectar','Luz','Som','Magnetismo',0),
+qp('Distancia Terra-Sol?','1 mi km','150 mi km','1 bi km','10 mil km',1),qp('Plasma?','Quarto estado da materia','Sangue','Liquido espesso','Gas comum',0),
+qp('Constante gravitacional?','Velocidade da luz','Define forca gravitacional','Peso','Temperatura',1),qp('Digestao celular?','Fagocitose','Mitose','Fotossintese','Osmose',0),
+qp('Tecido epitelial?','Reveste superficies','Muscular','Nervoso','Osseo',0),qp('Flor?','Orgao reprodutor de plantas','Folha','Fruto','Semente',0),
+qp('Gameta?','Celula reprodutora','Sanguinea','Bacteria','Virus',0),qp('Citoplasma?','Entre membrana e nucleo','Nucleo','Membrana','Parede',0),
+qp('Funcao da membrana plasmatica?','Controla entrada e saida','Produz energia','Armazena DNA','Digere',0),qp('Populacao?','Individuos da mesma especie numa area','Todos os seres','Animais','Plantas',0),
+qp('Hormonio?','Substancia de glandulas que regula funcoes','Vitamina','Enzima','Mineral',0),qp('Respiracao?','Obter energia com oxigenio','So inspirar','Tosse','Espirro',0),
+qp('Fauna?','Animais de uma regiao','Plantas','Fungos','Bacterias',0),qp('Flora?','Plantas de uma regiao','Animais','Minerais','Rios',0),
+qp('Germinacao?','Inicio do desenvolvimento da semente','Decomposicao','Polinizacao','Fecundacao',0),qp('Fermentacao?','Decomposicao sem O2 que produz energia','Fotossintese','Respiracao aerobica','Digestao',0),
+qp('Esqueleto?','Conjunto de ossos','Musculos','Veias','Nervos',0),qp('Sistema endocrino?','Glandulas produtoras de hormonios','Nervoso','Digestorio','Respiratorio',0),
+qp('Especie endemica?','So existe em um lugar','Comum em todo lugar','Extinta','Em perigo',0),qp('Predacao?','Caca para se alimentar','Cooperacao','Competicao','Simbiose',0),
+qp('Parasitismo?','Um se beneficia e prejudica o outro','Cooperacao','Mutualismo','Comensalismo',0),qp('Reproducao assexuada?','Sem uniao de gametas','Com fecundacao','De flores','Humana',0),
+qp('Fecundacao?','Uniao de espermatozoide e ovulo','Folha','Fruto','Germinacao',0),qp('Tecido nervoso?','Neuronios transmitem impulsos','Muscular','Osseo','Adiposo',0),
+qp('Bolo alimentar?','Alimento mastigado com saliva','Doce','Remedio','Vitamina',0),qp('Saprofago?','Alimenta de materia em decomposicao','Caca','Fotossintese','Parasita',0),
+qp('Estoma?','Abertura nas folhas para troca de gases','Raiz','Caule','Flor',0),qp('Xilema?','Conduz agua nas plantas','Seiva elaborada','Raiz','Fruto',0),
+qp('Floema?','Conduz seiva elaborada','Agua','Raiz','Caule',0),qp('Homeostase?','Equilibrio interno do corpo','Doenca','Mutacao','Adaptacao',0),
+qp('Sinapse?','Comunicacao entre neuronios','Musculo','Osso','Articulacao',0)
+]},
+biologia:{name:'Biologia',icon:'fa-dna',color:'var(--success)',questions:[
+qp('Maior organela celular?','Ribossomo','Nucleo','Mitocôndria','Lisossomo',1),qp('Cromossomos na celula humana?','23','44','46','48',2),
+qp('O que e o DNA?','Proteina','Carrega informacao genetica','Orgao','Tecido',1),qp('Orgao que filtra o sangue?','Coracao','Pulmao','Rim','Figado',2),
+qp('Ossos do corpo adulto?','150','206','300','106',1),qp('Tipo sanguineo doador universal?','A','B','AB','O',3),
+qp('Neuronios sao?','Musculares','Do sangue','Do sistema nervoso','Osseas',2),qp('Vitamina da pele com sol?','A','B','C','D',3),
+qp('Mitose?','Fecundacao','Divisao celular','Digestao','Respiracao',1),qp('Maior orgao do corpo?','Figado','Intestino','Pele','Pulmao',2),
+qp('Proteinas sao?','Carboidratos','Macromoleculas de aminoacidos','Gorduras','Vitaminas',1),qp('Sistema de defesa?','Digestorio','Respiratorio','Imunologico','Circulatorio',2),
+qp('Respiracao celular?','Respirar ar','Produzir energia nas celulas','Troca nos pulmoes','Filtrar ar',1),qp('Orgao que bombeia sangue?','Pulmao','Figado','Rim','Coracao',3),
+qp('Virus?','Celula viva','Precisa de celula hospedeira','Bacteria','Fungo',1),qp('Funcao dos globulos vermelhos?','Combater infeccoes','Transportar oxigenio','Coagular','Anticorpos',1),
+qp('Ecologia?','Estudo das celulas','Relacoes seres vivos e ambiente','Ossos','Virus',1),qp('Funcao do intestino delgado?','Bile','Absorver nutrientes','Filtrar sangue','Bombeia',1),
+qp('Enzima?','Hormonio','Proteina que acelera reacoes','Vitamina','Mineral',1),qp('Excrecao?','Eliminar residuos','Reproducao','Digestao','Respiracao',0),
+qp('Funcao dos pulmoes?','Bombar sangue','Filtrar urina','Troca de gases','Digestao',2),qp('Bacteria?','Unicelular procarionte','Virus','Fungo','Planta',0),
+qp('Orgao que produz insulina?','Figado','Pancreas','Rim','Estomago',1),qp('Fungo?','Sem folhas','Alimenta de materia em decomposicao','Animal','Bacteria',1),
+qp('Sangue?','Tecido liquido que circula','Gas','Liquido transparente','Suco',0),qp('Tecido muscular?','Celulas que contraem','Neuronios','Ossos','Veias',0),
+qp('Funcao da pele?','So estetica','Protecao e regulacao','Digestao','Respiracao',1),qp('Osmose?','Passagem de solvente por membrana','Energia','Eletrons','Reacao',0),
+qp('Semente?','Folha seca','Embriao com nutrientes','Fruto','Raiz',1),qp('Polinizacao?','Transferencia de polen','Germinacao','Fotossintese','Transpiracao',0),
+qp('Funcao do figado?','Desintoxicar e produzir bile','Bombear sangue','Filtrar urina','Digere',0),qp('Hereditariedade?','Transmissao de caracteristicas dos pais','Doenca','Mutacao','Adaptacao',0),
+qp('Protozoario?','Animal pequeno','Unicelular eucarionte','Bacteria','Virus',1),qp('Funcao do cerebelo?','Pensar','Coordenar movimentos','Ver','Ouvir',1),
+qp('Articulacao?','Juncao entre ossos','Tipo de musculo','Tendao','Ligamento',0),qp('Glandula?','Produz substancias','Osso','Musculo','Vaso',0),
+qp('Cromossomo?','Carrega os genes','Tipo de celula','Organelo','Proteina',0),qp('Simbiose?','Relacao harmoniosa entre especies','Doenca','Competicao','Predacao',0),
+qp('Reflexo?','Resposta involuntaria rapida','Pensamento profundo','Acao consciente','Sonho',0),
+qp('Funcao dos leucocitos?','Transportar O2','Defender organismo','Coagular','Produzir energia',1),qp('Metamorfose?','Transformacao no desenvolvimento','Mudanca de clima','Cor','Habitat',0),
+qp('Alelo dominante?','Se manifesta sozinho','Se esconde','Inativo','Mutante',0),qp('Funcao do esofago?','Digestao','Levar alimento ao estomago','Absorcao','Respiracao',1),
+qp('Cadeia trofica?','Quem se alimenta de quem','Montanhas','DNA','Processo quimico',0),qp('Vacina?','Estimula sistema imunologico','Dor','Vitamina','Hormonio',0),
+qp('Clonagem?','Copia identica de um ser','Cruzamento','Mutacao','Transgenia',0),qp('Bioma?','Vida de regiao com clima especifico','Animal','Planta','Rio',0),
+qp('Citoplasma?','Entre membrana e nucleo','Nucleo','Membrana','Parede',0),qp('Funcao da membrana plasmatica?','Controla entrada e saida','Energia','DNA','Digestao',0),
+qp('Populacao?','Individuos mesma especie numa area','Todos os seres','Animais','Plantas',0),qp('Hormonio?','Substancia de glandulas reguladora','Vitamina','Enzima','Mineral',0),
+qp('Unicelular?','Uma unica celula','Sem celula','Pequeno','Invisivel',0),qp('Fauna?','Animais de uma regiao','Plantas','Fungos','Bacterias',0),
+qp('Flora?','Plantas de uma regiao','Animais','Minerais','Rios',0),qp('Germinacao?','Desenvolvimento da semente','Decomposicao','Polinizacao','Fecundacao',0),
+qp('Muda?','Troca de pele/pelo','Doenca','Alimento','Mutacao',0),qp('Nectar?','Liquido doce das flores','Veneno','Suco','Agua salgada',0),
+qp('Cariotipo?','Mapa dos cromossomos','Dieta','Sangue','Celula',0),qp('Fermentacao?','Sem O2 produz energia','Fotossintese','Aerobica','Digestao',0),
+qp('Esqueleto?','Ossos que sustentam o corpo','Musculos','Veias','Nervos',0),qp('Endocrino?','Glandulas e hormonios','Nervoso','Digestorio','Respiratorio',0),
+qp('Reproducao assexuada?','Sem gametas','Com fecundacao','De flores','Humana',0),qp('Fecundacao?','Uniao de gametas','Folha','Fruto','Germinacao',0),
+qp('Tecido nervoso?','Neuronios transmitem impulsos','Muscular','Osseo','Adiposo',0),qp('Bolo alimentar?','Mastigado com saliva','Doce','Remedio','Vitamina',0),
+qp('Saprofago?','Alimenta de decomposicao','Caca','Fotossintese','Parasita',0),qp('Estoma?','Abertura nas folhas','Raiz','Caule','Flor',0),
+qp('Xilema?','Conduz agua nas plantas','Seiva elaborada','Raiz','Fruto',0),qp('Floema?','Conduz seiva elaborada','Agua','Raiz','Caule',0),
+qp('Homeostase?','Equilibrio interno','Doenca','Mutacao','Adaptacao',0),qp('Sinapse?','Comunicacao entre neuronios','Musculo','Osso','Articulacao',0),
+qp('Predacao?','Caca para alimento','Cooperacao','Competicao','Simbiose',0),qp('Parasitismo?','Beneficia e prejudica','Cooperacao','Mutualismo','Comensalismo',0),
+qp('Comensalismo?','Beneficia sem prejudicar','Parasitismo','Predacao','Competicao',0),qp('Ectoderma?','Camada externa do embriao','Interna','Media','Pele',0),
+qp('Assoreamento?','Acumulo de sedimentos','Seca','Poluicao','Erosao',0),qp('Manguezal?','Ecossistema costeiro','Deserto','Floresta alta','Campo',0),
+qp('Recife de coral?','Estrutura de calcario','Rocha vulcanica','Areia','Montanha',1),qp('Aquifero?','Reserva subterranea de agua','Lago','Rio seco','Poco',0),
+qp('Tecnologia verde?','Tecnologia sustentavel','Poluente','Antiga','Cara',0),qp('Biodiversidade?','Variedade de seres vivos','Um ser','Uma planta','Um animal',0),
+qp('Mutacao?','Alteracao no DNA','Doenca comum','Cura','Vacina',0),qp('Selecao natural?','Mais adaptados sobrevivem','Sorte','Acaso','Forca humana',0),
+qp('Adaptacao?','Ajuste ao ambiente','Doenca','Mutacao','Extincao',0),qp('Extincao?','Desaparecimento de uma especie','Nascimento','Migracao','Adaptacao',0),
+qp('Bioma aquatico?','Ambiente de agua','Floresta','Deserto','Montanha',0),qp('Cerrado?','Savanica brasileira','Floresta','Deserto','Pantanal',0),
+qp('Mata atlantica?','Floresta costeira','Amazonia','Cerrado','Caatinga',0),qp('Caatinga?','Semiárido nordestino','Amazonica','Cerrado','Pampa',0),
+qp('Pampa?','Campos do sul','Floresta','Deserto','Serra',0),qp('Amphibia?','Anfibios (sapos, ras)','Peixes','Aves','Mamiferos',0),
+qp('Mamiferos?','Amamentam os filhotes','Poem ovos','Tem escamas','Vivem na agua',0),qp('Aves?','Tem penas e voam','Tem escamas','Tem pelos','Vivem na agua',0),
+qp('Peixes?','Vivem na agua com branquias','Terra seca','Voam','Tem pelos',0),qp('Repteis?','Escamas e sangue frio','Pelos e sangue quente','Penas','Branquias',0),
+qp('Insetos?','6 patas e exoesqueleto','8 patas','4 patas','Nenhuma pata',0),qp('Aracnídeos?','8 patas (aranhas)','6 patas','4 patas','10 patas',0),
+qp('Moluscos?','Corpo mole (caracol, lula)','Osso duro','Exoesqueleto','Esqueleto interno',0),qp('Crustaceos?','Exoesqueleto e patas articuladas','Moles','Peludos','Com penas',0)
+]},
+portugues:{name:'Portugues',icon:'fa-book',color:'#8B5CF6',questions:[
+qp('Classe de "bonito"?','Substantivo','Verbo','Adjetivo','Adverbio',2),qp('O que e silaba?','Uma letra','Som vocalico','Grupo de fonemas numa so emissao','Uma palavra',2),
+qp('Sinonimo de "contente"?','Triste','Feliz','Bravo','Cansado',1),qp('O que e substantivo?','Acao','Nomeia seres','Qualidade','Conexao',1),
+qp('"Eles comeram" tempo verbal?','Presente','Pretérito perfeito','Futuro','Imperfeito',1),qp('Antonimo de "grande"?','Enorme','Pequeno','Alto','Largo',1),
+qp('Crase?','Acento agudo','Fusao de "a" + artigo "a"','Trema','Circunflexo',1),qp('Palavra com ditongo?','Paz','Saude','Sol','Pao',3),
+qp('Verbo?','Indica acao ou estado','Nomeia','Qualifica','Conecta',0),qp('Frase correta?','Nos vamos ao cinema','Nos vai ao cinema','Nos vamo','Nos vai no cinema',0),
+qp('Pronome?','Substitui substantivo','Indica acao','Qualifica','Indica lugar',0),qp('"Rapidamente" e?','Adjetivo','Adverbio','Substantivo','Verbo',1),
+qp('Plural de "cidadao"?','Cidadaos','Cidadões','Cidadeões','Cidadães',0),qp('Preposicao?','Liga termos','Indica acao','Nomeia','Qualifica',0),
+qp('Sujeito de "O gato dorme"?','Dorme','No sofa','O gato','Sofa',2),qp('Artigo?','Acompanha substantivo','Verbo','Adjetivo','Adverbio',0),
+qp('Feminino de "ator"?','Atriz','Atora','Atreza','Actora',0),qp('Conjuncao?','Liga oracoes','Nomeia','Qualifica','Acao',0),
+qp('Aumentativo de "boca"?','Bocao','Bocca','Bocona','Bocaza',0),qp('Interjeicao?','Exprime sentimento','Liga','Nomeia','Descreve',0),
+qp('Frase com "mas" correta?','Estudou mas passou','Estudou, mas nao passou','Mas ela estudou','Ela mas estudou',1),qp('Numeral?','Indica quantidade/ordem','Verbo','Preposicao','Artigo',0),
+qp('Superlativo de "bom"?','Bonissimo','Bomzao','Otimo','Melhor',3),qp('Onomatopeia?','Imita sons','Estrangeira','Composta','Derivada',0),
+qp('Diminutivo de "pao"?','Paozinho','Paezinho','Paizinho','Paozao',0),qp('Hiato?','Vogais em silabas diferentes','Mesma silaba','Consoantes','Uma so vogal',0),
+qp('Tritongo?','Pai','Saudade','Pao','Paraguaia',3),qp('Digrafo?','Duas letras um fonema','Duas silabas','Duas palavras','Duas vogais',0),
+qp('Plural de "mao"?','Maos','Maões','Mãos','Maes',2),qp('Encontro consonantal?','Consoantes sem vogal intermediaria','Em silabas diferentes','Consoante e vogal','Vogais',0),
+qp('Classe de "em"?','Preposicao','Conjuncao','Adverbio','Pronome',0),qp('Sinonimo?','Sentido parecido','Contrario','Derivada','Primitiva',1),
+qp('Antonimo de "claro"?','Luminoso','Escuro','Brilhante','Transparente',1),qp('Palavra derivada?','Vem de outra (primitiva)','Original','Composta','Estrangeira',0),
+qp('Vogal?','A E I O U','B C D F','Forte','Frase',0),qp('Consoante?','B C D F G','A E I O','Vogal','Frase',0),
+qp('Semivogal?','Som fraco de ditongo/tritongo','Vogal forte','Consoante','Frase',0),qp('Fonema?','Unidade sonora','Letra','Silaba','Frase',0),
+qp('Letra e fonema sao iguais?','Nem sempre (ex: "ch" = 1 fonema)','Sempre','Nunca','Raramente',0),qp('Silaba tonica?','Silaba mais forte','Mais fraca','Igual','Sem acento',0),
+qp('Oxitona?','Tonica na ultima','Penultima','Antepenultima','Sem tonica',0),qp('Paroxitona?','Tonica na penultima','Ultima','Antepenultima','Sem tonica',1),
+qp('Proparoxitona?','Tonica na antepenultima','Penultima','Ultima','Sem tonica',0),qp('Monossilabo?','Uma silaba so','Duas','Tres','Quatro',0),
+qp('Encontro vocalico?','Vogais juntas (ditongo, tritongo, hiato)','Consoantes','Uma vogal','Consoante e vogal',0),qp('Ditongo crescente?','Semivogal + vogal','Vogal + semivogal','Duas vogais','Vogal + consoante',0),
+qp('Ditongo decrescente?','Vogal + semivogal','Semivogal + vogal','Duas consoantes','Consoante + vogal',1),qp('Encontro consonantal perfeito?','Consoantes que se separam','Que nao se separam','Vogais','Uma consoante',0),
+qp('Digrafo vocalico?','Duas vogais um fonema','Duas consoantes','Vogal so','Consoante so',0),qp('Digrafo consonantal?','Duas consoantes um fonema (rr, ss, ch)','Vogais','Vogal so','Uma consoante',0),
+qp('Acentuacao de oxitonas?','Acentuam se terminam em A E O seguidos ou nao de S','Nunca','Sempre','So com til',0),qp('Proparoxitonas sao?','Sempre acentuadas','Nunca','As vezes','Raramente',0),
+qp('Paroxitonas terminadas em L?','Nao acentuadas','Acentuadas','As vezes','Sempre',0),qp('Paroxitonas terminadas em R?','Nao acentuadas','Acentuadas','As vezes','Sempre',0),
+qp('Paroxitonas terminadas em U?','Nao acentuadas (exceto especiais)','Acentuadas','Sempre','Raramente',0),qp('Til serve para?','Marcar vogal nasal','Acento agudo','Crase','Trema',0),
+qp('Acento circunflexo?','Fechadas A E O','Abertas','Qualquer','So em vogais abertas',0),qp('Acento agudo?','Vogais abertas A E O I U','Fechadas','So A','So E',0),
+qp('Por que (separado) no inicio?','Pergunta direta','Resposta','Explicacao','Final de frase',0),qp('Porque (junto) como resposta?','Explicacao/causa','Pergunta','Final','Titulo',0),
+qp('Por quê (separado acentuado)?','Final de frase com pergunta','Meio de frase','Titulo','Explicacao',0),qp('Porquê (junto acentuado)?','Substantivo (o porquê)','Pergunta','Meio de frase','Verbo',0),
+qp('Usa-se SS entre vogais?','Sim (passear, passar)','Nao','As vezes','Nunca',0),qp('Usa-se C antes de E/I?','Sim (cerca, cidade)','Nao','Raramente','Nunca',0),
+qp('Usa-se Ç antes de A/O/U?','Sim (caça, braço)','Nao','Raramente','Nunca',0),qp('RR entre vogais?','Sim (carro, burro)','Nao','As vezes','Nunca',0),
+qp('R simples no inicio?','Sim (rato, rosa)','Nao','As vezes','Nunca',0),qp('SC em que palavras?','Nascer, crescer, descer','Certo, cidade','Passar, assar','Cacar',0),
+qp('M antes de P e B?','Sim (campo, combater)','Nao','As vezes','Nunca',0),qp('N antes de consoante?','Sim (ponto, cantar)','Nao','As vezes','Nunca',0),
+qp('Derivacao prefixal?','Prefixo (infeliz, reescrever)','Sufixo','Composicao','Nenhuma',0),
+qp('Derivacao sufixal?','Sufixo (livro -> livraria)','Prefixo','Composicao','Nenhuma',0),qp('Derivacao parassintetica?','Prefixo + sufixo ao mesmo tempo','So prefixo','So sufixo','Composicao',0),
+qp('Composicao por justaposicao?','Sem hifen (passatempo)','Com hifen (guarda-chuva)','Acento','Apostrofo',0),qp('Composicao por aglutinacao?','Palavras se fundem (planalto)','Com hifen','Separadas','Com acento',0),
+qp('Figura de linguagem?','Recurso expressivo','Erro','Pontuacao','Regra',0),qp('Metafora?','"Olhos sao estrelas" (comparacao implicita)','"Como estrelas"','"Muito alto"',"Hoje faz calor",0),
+qp('Comparacao?','Semelhanca com "como"','Metafora direta','Ironia','Hipérbole',0),qp('Hipérbole?','Exagero intencional','Diminuicao','Comparacao','Metafora',0),
+qp('Ironia?','Dizer o contrario','Elogio','Pergunta','Definicao',0),qp('Personificacao?','Dar traços humanos a nao humanos','Descrever pessoa','Comparar','Exagerar',0),
+qp('Aliteracao?','Repeticao de consoantes','Vogais','Palavras','Frases',0),qp('Assonancia?','Repeticao de vogais','Consoantes','Silabas','Rimas',1),
+qp('Denotacao?','Sentido literal','Figurado','Emocional','Oposto',0),qp('Conotacao?','Sentido figurado','Literal','Oposto','Sonoro',1),
+qp('Fabula?','Animais que ensinam moral','Conto de fadas','Poema','Cronica',0),qp('Conto?','Narrativa curta','Longa','Poema','Teatral',0),
+qp('Romance?','Narrativa longa','Curta','Poema','Cronica',0),qp('Cronica?','Fatos cotidianos','Cientifico','Poema','Carta',0),
+qp('Coesao?','Ligacao entre ideias','Separacao','Tipo de letra','Tamanho',0),qp('Coerencia?','Logica e sentido','Boniteza','Tamanho','Letra',1),
+qp('Regencia verbal?','Preposicao correta do verbo','Conjugacao','Classificacao','Tempo',0),qp('Concordancia verbal?','Verbo ajusta ao sujeito','Nome ao substantivo','Pronome','Artigo',0),
+qp('Concordancia nominal?','Nome/adj/artigo em genero e numero','Verbo','Preposicao','Adverbio',1),qp('Voz passiva?','Sujeito recebe acao','Pratica acao','Sem sujeito','Dois sujeitos',0),
+qp('Voz ativa?','Sujeito pratica acao','Recebe','Nao ha sujeito','Dois',0),qp('Neologismo?','Palavra nova','Antiga','Estrangeira','Composta',0),
+qp('Estrangeirismo?','Palavra de outro idioma','Nova','Giria','Regionalismo',0),qp('Coloquialismo?','Expressao informal','Tecnico','Antiga','Estrangeira',0),
+qp('Ambiguidade?','Duplo sentido','Clareza','Beleza','Erro ortografico',0),qp('Gerundio de "falar"?','Falando','Falado','Falaria','Fale',0),
+qp('Participio de "escrever"?','Escrito','Escrevendo','Escreveu','Escreva',0),qp('Infinitivo de "fazendo"?','Fazer','Feito','Fazia','Fara',0),
+qp('Passado de "poder"?','Podeu','Pôde','Podia','Podido',1),qp('Passado de "ir"?','Irei','Fui','Iba','Vo',1),
+qp('Imperativo de "fazer"?','Faca','Faz','Fez','Faria',0),qp('Futuro do presente de "ir"?','Irei','Ia','Fui','Vou',0),
+qp('Pretérito imperfeito de "ser"?','Fui','Era','Serei','Sou',1),qp('Singular de "milhoes"?','Milhao','Milhar','Milho','Mil',0),
+qp('Frase nominal?','Sem verbo','Com verbo','Longa','Curta',0),qp('Oracao subordinada?','Depende de outra','Independente','Sem verbo','Interjeicao',0)
+]},
+geografia:{name:'Geografia',icon:'fa-globe-americas',color:'var(--secondary)',questions:[
+qp('Maior continente?','Africa','America do Norte','Asia','Europa',2),qp('Rio mais longo?','Amazonas','Nilo','Mississipi','Yangtze',1),
+qp('Menor pais?','Monaco','Vaticano','San Marino','Liechtenstein',1),qp('Continente do Brasil?','Europa','Africa','America do Sul','Asia',2),
+qp('Capital da Australia?','Sydney','Melbourne','Camberra','Brisbane',2),qp('Bacia hidrografica?','Montanha','Area drenada por rio','Lago','Ilha',1),
+qp('Oceano entre America e Europa?','Pacifico','Indico','Atlantico','Artico',2),qp('Deserto maior do mundo?','Saara','Gobi','Antartico','Kalahari',2),
+qp('Estados do Brasil?','24','26','27','28',2),qp('Montanha mais alta do Brasil?','Pico da Neblina','Roraima','Agulhas Negras','Bandeira',0),
+qp('Fusos horarios?','Tipos de clima','Divisoes para horarios','Vegetacao','Latitude',1),qp('Pais mais populoso?','EUA','India','China','Indonesia',1),
+qp('Linha do Equador?','Fronteira','Divide Norte e Sul','Rio','Montanha',1),qp('Capital de Portugal?','Porto','Lisboa','Faro','Coimbra',1),
+qp('Bioma?','Animal','Vida de uma regiao','Tipo de solo','Formacao rochosa',1),qp('Capital do Japao?','Osaka','Toquio','Quioto','Nagasaki',1),
+qp('Latitude?','Distancia do Equador','Do polo','Altitude','Longitude',0),qp('Longitude?','Distancia de Greenwich','Do Equador','Altitude','Latitude',0),
+qp('Rio mais longo do Brasil?','Sao Francisco','Parana','Amazonas','Tocantins',2),qp('Planalto?','Plano e elevado','Muito baixo','Montanha alta','Vale',0),
+qp('Capital da Argentina?','Buenos Aires','Santiago','Montevideo','Lima',0),qp('Peninsula?','Cercada de agua por 3 lados','Ilha','Continente','Arquipelago',0),
+qp('Maior oceano?','Atlantico','Indico','Pacifico','Artico',2),qp('Clima?','Condicoes atmosfericas ao longo do tempo','Um dia','Estacao','Temperatura agora',0),
+qp('Capital da Franca?','Londres','Paris','Berlim','Madrid',1),qp('Urbanizacao?','Crescimento das cidades','Plantas','Populacao rural','Agricultura',0),
+qp('Deserto mais quente?','Gobi','Antartico','Saara','Kalahari',2),qp('Meridiano?','Linha polo a polo','Equador','Tropico','Paralelo',0),
+qp('Capital do Mexico?','Guadalajara','Monterrey','Cidade do Mexico','Puebla',2),qp('Arquipelago?','Conjunto de ilhas','Ilha grande','Continente','Peninsula',0),
+qp('Montanha mais alta do mundo?','Everest','K2','Kilimanjaro','Aconcagua',0),qp('Ilha?','Terra cercada de agua por todos os lados','Peninsula','Continente','Planalto',0),
+qp('Pais mais extenso?','China','EUA','Canada','Russia',3),qp('Agricultura de subsistencia?','Para consumo proprio','Exportacao','Industrial','Estufa',0),
+qp('Capital do Chile?','Santiago','Buenos Aires','Lima','Bogota',0),qp('Industrializacao?','Instalacao de industrias','Agricultura','Urbanizacao','Mineracao',0),
+qp('Continente mais populoso?','Africa','Europa','Asia','America',2),qp('Zona da Mata?','Litoranea com floresta','Desertica','Planalto','Pampa',0),
+qp('Capital do Peru?','Bogota','Lima','Quito','La Paz',1),qp('Cerrado?','Savanica brasileira','Floresta','Deserto','Pantanal',0),
+qp('Maior pais da America do Sul?','Argentina','Colombia','Brasil','Venezuela',2),qp('Pantanal?','Planicie de inundacao','Deserto','Amazonia','Montanha',0),
+qp('Capital da Colombia?','Lima','Quito','Bogota','Caracas',2),qp('Piramide etaria?','Distribuicao por idade e sexo','Temperaturas','Vegetacao','Chuvas',0),
+qp('Capital da Alemanha?','Munique','Berlim','Frankfurt','Hamburgo',1),qp('Migracao?','Deslocamento de pessoas','Turismo','Animais','Mercadorias',0),
+qp('Capital da Italia?','Milao','Roma','Napolis','Veneza',1),qp('PIB?','Riquezas produzidas','Peso','Populacao','Perimetro',0),
+qp('Lago mais extenso?','Mar Caspio','Vitoria','Superior','Baikal',0),qp('Megalopole?','Metropoles interligadas','Cidade grande','Pais','Continente',0),
+qp('Capital do Egito?','Alexandria','Cairo','Luxor','Giza',1),qp('Caatinga?','Semiárido nordestino','Amazonia','Cerrado','Pampa',0),
+qp('Capital da Russia?','Sao Petersburgo','Moscou','Novosibirsk','Vladivostok',1),qp('Exportacao?','Venda para outros paises','Compra','Producao interna','Consumo',0),
+qp('Capital da Africa do Sul?','Cidade do Cabo','Pretoria','Joanesburgo','Durban',1),qp('Importacao?','Compra de outros paises','Venda','Producao','Exportacao',0),
+qp('Capital da Espanha?','Barcelona','Madrid','Sevilha','Valencia',1),qp('IDH?','Indice de qualidade de vida','Poluicao','Chuvas','Populacao',0),
+qp('Capital da India?','Mumbai','Nova Delhi','Calcuta','Chennai',1),qp('Tropico?','Delimita zonas quentes','Floresta','Montanha','Rio',0),
+qp('Pais com maior area florestal?','EUA','Canada','Russia','Brasil',3),qp('Mata atlantica?','Floresta costeira','Amazonia','Cerrado','Caatinga',0),
+qp('Capital da Inglaterra?','Manchester','Liverpool','Londres','Birmingham',2),qp('Capital da Coreia do Sul?','Pyongyang','Seul','Busan','Incheon',1),
+qp('Aquecimento global?','Aumento da temperatura media','Fenomeno local','Tipo de chuva','Vento',0),qp('Capital do Canada?','Toronto','Vancouver','Ottawa','Montreal',2),
+qp('Recurso renovavel?','Se recompoe naturalmente','Petroleo','Carvao','Gas natural',0),qp('Capital da Turquia?','Istambul','Ankara','Izmir','Antalya',1),
+qp('Recurso nao renovavel?','Petroleo, carvao','Agua','Luz solar','Vento',0),qp('Capital da Arabia Saudita?','Jedda','Riade','Meca','Medina',1),
+qp('Sustentabilidade?','Usar recursos sem comprometer futuro','Explorar muito','Lixo','Desmatamento',0),qp('Capital da Noruega?','Oslo','Estocolmo','Helsinque','Copenhague',0),
+qp('Vulcao?','Abertura na crosta com magma','Montanha comum','Lago','Geiser',0),qp('Capital da Suecia?','Oslo','Estocolmo','Helsinque','Copenhague',1),
+qp('Tsunami?','Onda gigante por terremotos','Maremoto normal','Tempestade','Tornado',0),qp('Capital da Grecia?','Atenas','Sofia','Roma','Belgrado',0),
+qp('Terremoto?','Vibracao da crosta','Erupcao','Tsunami','Tornado',0),qp('Capital da Polonia?','Praga','Varsóvia','Budapeste','Viena',1),
+qp('Tornado?','Coluna de ar girando','Terremoto','Tempestade','Chuva',0),qp('Capital da Austria?','Munique','Viena','Praga','Zurique',1),
+qp('Seca?','Periodo sem chuva','Chuva forte','Neve','Geada',0),qp('Capital de Cuba?','Havana','Santiago','Varadero','Trinidad',0),
+qp('Furacao?','Tempestade tropical forte','Nevasca','Terremoto','Seca',0),
+qp('O que e erosao?','Desgaste do solo por agentes naturais','Formacao de montanhas','Plantio de arvores','Irrigacao',0),
+qp('Qual agente NAO causa erosao?','Agua','Vento','Sol direto','Gelo',2),
+qp('Erosao pluvial e causada por?','Vento','Chuva','Gelo','Vulcoes',1),
+qp('Erosao eolica e causada por?','Agua','Vento','Gelo','Terra',1),
+qp('O que e erosao fluvial?','Desgaste por rios','Desgaste por vento','Desgaste por gelo','Desgaste por ondas',0),
+qp('Erosao marinha atinge?','Montanhas','Costas e praias','Florestas','Desertos',1),
+qp('Como evitar erosao no solo?','Cortar arvores','Plantar vegetacao','Queimar mato','Construir estradas',1),
+qp('Erosao acelerada e causada por?','Acoes humanas','Natureza lenta','Chuvas leves','Ventos fracos',0),
+qp('Voçoroca e?','Forma grave de erosao','Tipo de planta','Animal','Rio',0),
+qp('Erosao glacial e causada por?','Movimento de geleiras','Chuvas fortes','Ventos','Vulcoes',0),
+qp('Solo exposto sem vegetacao sofre mais?','Erosao','Fertilidade','Umidade','Sombra',0),
+qp('Erosao em encostas pode causar?','Deslizamentos','Nevascas','Terremotos','Maremotos',0),
+qp('Terracoamento serve para?','Reducir erosao em encostas','Aumentar vento','Secar o solo','Esquentar a terra',0),
+qp('O que e assoreamento?','Acumulo de sedimentos em rios','Seca do rio','Poluicao da agua','Contaminacao',0),
+qp('Erosao e diferente de intemperismo porque?','Erosao transporta, intemperismo decompoe','Sao iguais','Erosao so no mar','Intemperismo so no deserto',0),
+qp('🇧🇷 Qual pais representa esta bandeira?','Argentina','Brasil','Portugal','Chile',1),
+qp('🇺🇸 Qual pais representa esta bandeira?','Canada','Mexico','Estados Unidos','Inglaterra',2),
+qp('🇯🇵 Qual pais representa esta bandeira?','China','Japao','Coreia do Sul','Tailândia',1),
+qp('🇫🇷 Qual pais representa esta bandeira?','Italia','Alemanha','Franca','Espanha',2),
+qp('🇩🇪 Qual pais representa esta bandeira?','Italia','Alemanha','Franca','Belgica',1),
+qp('🇮🇹 Qual pais representa esta bandeira?','Franca','Grecia','Italia','Espanha',2),
+qp('🇪🇸 Qual pais representa esta bandeira?','Portugal','Italia','Espanha','Mexico',2),
+qp('🇵🇹 Qual pais representa esta bandeira?','Brasil','Espanha','Portugal','Argentina',2),
+qp('🇦🇷 Qual pais representa esta bandeira?','Chile','Uruguai','Argentina','Brasil',2),
+qp('🇲🇽 Qual pais representa esta bandeira?','Espanha','Colombia','Mexico','Peru',2),
+qp('🇨🇦 Qual pais representa esta bandeira?','Estados Unidos','Canada','Russia','Groenlandia',1),
+qp('🇬🇧 Qual pais representa esta bandeira?','Inglaterra','Escocia','Irlanda','Australia',0),
+qp('🇦🇺 Qual pais representa esta bandeira?','Nova Zelandia','Australia','Africa do Sul','India',1),
+qp('🇰🇷 Qual pais representa esta bandeira?','Japao','China','Coreia do Sul','Coreia do Norte',2),
+qp('🇨🇳 Qual pais representa esta bandeira?','Japao','Vietna','China','Coreia',2),
+qp('🇮🇳 Qual pais representa esta bandeira?','Paquistao','India','Bangladesh','Sri Lanka',1),
+qp('🇷🇺 Qual pais representa esta bandeira?','Canada','China','Russia','Estados Unidos',2),
+qp('🇪🇬 Qual pais representa esta bandeira?','Marrocos','Egito','Libia','Sudao',1),
+qp('🇿🇦 Qual pais representa esta bandeira?','Nigeria','Quenia','Africa do Sul','Etiopia',2),
+qp('🇳🇬 Qual pais representa esta bandeira?','Gana','Nigeria','Camaroes','Senegal',1),
+qp('🇨🇱 Qual pais representa esta bandeira?','Argentina','Peru','Chile','Bolivia',2),
+qp('🇵🇪 Qual pais representa esta bandeira?','Bolivia','Equador','Colombia','Venezuela',1),
+qp('🇨🇴 Qual pais representa esta bandeira?','Venezuela','Equador','Colombia','Peru',2),
+qp('🇻🇪 Qual pais representa esta bandeira?','Colombia','Equador','Peru','Venezuela',3),
+qp('🇺🇾 Qual pais representa esta bandeira?','Paraguai','Argentina','Uruguai','Brasil',2),
+qp('🇵🇾 Qual pais representa esta bandeira?','Bolivia','Paraguai','Uruguai','Argentina',1),
+qp('🇧🇴 Qual pais representa esta bandeira?','Peru','Chile','Bolivia','Paraguai',2),
+qp('🇹🇷 Qual pais representa esta bandeira?','Grecia','Turquia','Siria','Iran',1),
+qp('🇸🇦 Qual pais representa esta bandeira?','Irã','Iraque','Arabia Saudita','Emirados Arabes',2),
+qp('🇮🇱 Qual pais representa esta bandeira?','Siria','Jordania','Israel','Libano',2),
+qp('🇬🇷 Qual pais representa esta bandeira?','Italia','Chipre','Grecia','Turquia',2),
+qp('🇸🇪 Qual pais representa esta bandeira?','Noruega','Finlandia','Dinamarca','Suécia',3),
+qp('🇳🇴 Qual pais representa esta bandeira?','Suecia','Finlandia','Dinamarca','Noruega',3),
+qp('🇳🇿 Qual pais representa esta bandeira?','Australia','Fiji','Nova Zelandia','Papua-Nova Guine',2),
+qp('🇮🇪 Qual pais representa esta bandeira?','Escocia','Inglaterra','Irlanda','Pais de Gales',2)
+]},
+ingles:{name:'Ingles',icon:'fa-language',color:'#06D6A0',questions:[
+qp('"Obrigado" em ingles?','Sorry','Thank you','Please','Hello',1),qp('Passado de "go"?','Goed','Gone','Went','Going',2),
+qp('"Beautiful" significa?','Feio','Grande','Bonito','Pequeno',2),qp('"She ___ a teacher"','are','is','am','be',1),
+qp('Plural de "child"?','Childs','Childrens','Children','Childes',2),qp('"Weather" significa?','Clima','Tempo cronologico','Estacao','Temperatura',0),
+qp('"I ___ playing soccer now"','is','are','am','was',2),qp('Antonimo de "hot"?','Warm','Cold','Cool','Dry',1),
+qp('"Breakfast" significa?','Almoco','Jantar','Cafe da manha','Lanche',2),qp('"They ___ to school every day"','goes','go','going','gone',1),
+qp('"Library" significa?','Livraria','Biblioteca','Loja','Escola',1),qp('"Expensive" significa?','Barato','Caro','Grande','Pequeno',1),
+qp('"___ you like pizza?"','Do','Does','Did','Are',0),qp('Passado de "eat"?','Eated','Ate','Eaten','Eating',1),
+qp('"Neighbor" significa?','Amigo','Vizinho','Inimigo','Primo',1),qp('"Always" significa?','Nunca','As vezes','Sempre','Raramente',2),
+qp('"Behind" significa?','Na frente','Atras','Dentro','Em cima',1),qp('"Different" significa?','Igual','Diferente','Parecido','Mesmo',1),
+qp('"Enough" significa?','Pouco','Suficiente','Muito','Nada',1),qp('"Together" significa?','Separados','Juntos','Longe','Perto',1),
+qp('"Afraid" significa?','Corajoso','Com medo','Feliz','Triste',1),qp('"Believe" significa?','Negar','Acreditar','Esquecer','Dormir',1),
+qp('"Choose" significa?','Rejeitar','Escolher','Perder','Ganhar',1),qp('"Dangerous" significa?','Seguro','Perigoso','Facil','Bonito',1),
+qp('"Enjoy" significa?','Odiar','Desfrutar','Sofrer','Ignorar',1),qp('"Find" significa?','Perder','Encontrar','Esconder','Quebrar',1),
+qp('"Give" significa?','Pegar','Dar','Emprestar','Vender',1),qp('"Happen" significa?','Evitar','Acontecer','Cancelar','Esquecer',1),
+qp('"Imagine" significa?','Esquecer','Imaginar','Negar','Provar',1),qp('"Jump" significa?','Andar','Pular','Sentar','Deitar',1),
+qp('"Keep" significa?','Jogar fora','Manter/guardar','Comprar','Vender',1),qp('"Listen" significa?','Falar','Escrever','Ouvir','Cantar',1),
+qp('"Maybe" significa?','Com certeza','Talvez','Nunca','Sempre',1),qp('"Notice" significa?','Ignorar','Perceber','Esconder','Fugir',1),
+qp('"Offer" significa?','Recusar','Oferecer','Cobrar','Pagar',1),qp('"Paint" significa?','Apagar','Pintar','Desenhar','Cortar',1),
+qp('"Question" significa?','Resposta','Pergunta','Afirmacao','Ordem',1),qp('"Reach" significa?','Perder','Alcancar','Soltar','Largar',1),
+qp('"Simple" significa?','Dificil','Simples','Complexo','Grande',1),qp('"Travel" significa?','Ficar','Viajar','Trabalhar','Dormir',1),
+qp('"Understand" significa?','Confundir','Entender','Ignorar','Esquecer',1),qp('"Visit" significa?','Sair','Visitar','Mudar','Fugir',1),
+qp('"Wait" significa?','Correr','Esperar','Apressar','Sair',1),qp('"Yesterday" significa?','Amanha','Hoje','Ontem','Semana passada',2),
+qp('"Tomorrow" significa?','Ontem','Hoje','Amanha','Mes passado',2),qp('"Right now" significa?','Ontem','Agora mesmo','Amanha','Mais tarde',1),
+qp('"Usually" significa?','Nunca','Raramente','Geralmente','Sempre',2),qp('"Sometimes" significa?','Nunca','As vezes','Sempre','Geralmente',1),
+qp('"Never" significa?','Sempre','Nunca','As vezes','Geralmente',1),qp('"Often" significa?','Raramente','Frequentemente','Nunca','Uma vez',1),
+qp('"Already" significa?','Ainda nao','Ja','Nunca','Sempre',1),qp('"Soon" significa?','Tarde','Em breve','Demorando','Nunca',1),
+qp('"Hard" significa?','Facil','Dificil/Mole','Grande','Pequeno',1),qp('"Easy" significa?','Dificil','Facil','Medio','Grande',1),
+qp('"Fast" significa?','Lento','Rapido','Parado','Tranquilo',1),qp('"Slow" significa?','Rapido','Lento','Parado','Apressado',1),
+qp('"Early" significa?','Tarde','Cedo','No meio','No final',1),qp('"Late" significa?','Cedo','Tarde','No horario','Adiantado',1),
+qp('"Happy" significa?','Triste','Feliz','Bravo','Cansado',1),qp('"Sad" significa?','Feliz','Triste','Contente','Animado',1),
+qp('"Angry" significa?','Calmado','Bravo/Zangado','Feliz','Sonolento',1),qp('"Tired" significa?','Energico','Cansado','Animado','Descansado',1),
+qp('"Hungry" significa?','Com fome','Com sede','Sem fome','Cheio',0),qp('"Thirsty" significa?','Com fome','Com sede','Sem sede','Cheio',1),
+qp('"Sick" significa?','Saudavel','Doente','Curado','Forte',1),qp('"Healthy" significa?','Doente','Saudavel','Fraco','Cansado',1),
+qp('"Rich" significa?','Pobre','Rico','Mediano','Endividado',1),qp('"Poor" significa?','Rico','Pobre','Mediano','Generoso',1),
+qp('"Old" significa?','Novo','Velho','Jovem','Moderno',1),qp('"Young" significa?','Velho','Jovem','Novo','Adulto',1),
+qp('"Big" significa?','Pequeno','Grande','Medio','Minimo',1),qp('"Small" significa?','Grande','Pequeno','Medio','Maximo',1),
+qp('"Good" significa?','Ruim','Bom/Boa','Medio','Terrivel',1),qp('"Bad" significa?','Bom','Ruim','Medio','Excelente',1),
+qp('"Nice" significa?','Desagradavel','Legal/Simpatico','Feio','Estranho',1),qp('"Funny" significa?','Chato','Engraçado','Triste','Serio',1),
+qp('"Boring" significa?','Interessante','Chato','Engraçado','Legal',1),qp('"Important" significa?','Irrelevante','Importante','Pequeno','Facil',1),
+qp('"True" significa?','Falso','Verdadeiro','Mentira','Duvidoso',1),qp('"False" significa?','Verdadeiro','Falso','Correto','Real',1),
+qp('"Ready" significa?','Nao preparado','Pronto','Atrasado','Cansado',1),qp('"Busy" significa?','Livre','Ocupado','Relaxado','Preocupado',1),
+qp('"Closed" significa?','Aberto','Fechado','Quebrado','Novo',1),qp('"Open" significa?','Fechado','Aberto','Trancado','Quebrado',1),
+qp('"Full" significa?','Vazio','Cheio','Metade','Quase',1),qp('"Empty" significa?','Cheio','Vazio','Completo','Lotado',1),
+qp('"Clean" significa?','Sujo','Limpo','Organizado','Baguncado',1),qp('"Dirty" significa?','Limpo','Sujo','Organizado','Novo',1),
+qp('"Safe" significa?','Perigoso','Seguro','Arriscado','Fraco',1),qp('"Quiet" significa?','Barulhento','Silencioso','Alto','Medio',1),
+qp('"Loud" significa?','Baixo','Alto/Barulhento','Silencioso','Fraco',1),qp('"Strong" significa?','Fraco','Forte','Debil','Delicado',1),
+qp('"Weak" significa?','Forte','Fraco','Energico','Potente',1),qp('"Quick" significa?','Lento','Rapido','Calmo','Tranquilo',1)
+]},
+espanhol:{name:'Espanhol',icon:'fa-earth-americas',color:'var(--accent)',questions:[
+qp('"Obrigado" em espanhol?','Merci','Gracias','Thank you','Obrigado',1),qp('"Hermano" significa?','Primo','Tio','Irmao','Pai',2),
+qp('"Yo ___ estudiante"','es','son','soy','estoy',2),qp('Plural de "nino"?','Ninas','Ninos','Ninoes','Ninis',2),
+qp('"Mariposa" significa?','Formiga','Borboleta','Abelha','Joaninha',1),qp('"Nosotros ___ mexicanos"','soy','es','somos','son',2),
+qp('"Nevera" significa?','Fogao','Geladeira','Micro-ondas','Mesa',1),qp('Passado de "ir"?','Ire','Fui','Iba','Voy',1),
+qp('"Escuela" significa?','Escola','Casa','Rua','Praca',0),qp('"Ellos ___ al parque"','va','vas','vamos','van',3),
+qp('"Biblioteca" significa?','Livraria','Biblioteca','Loja','Mercearia',1),qp('"Sol" significa?','Lua','Estrela','Sol','Chuva',2),
+qp('"Comida" significa?','Bebida','Comida','Doce','Fruta',1),qp('"Tu ___ muy inteligente"','es','soy','somos','son',0),
+qp('"Zapatos" significa?','Meias','Sapatos','Camisas','Calcas',1),qp('"Rojo" significa?','Azul','Verde','Vermelho','Amarelo',2),
+qp('"Verde" significa?','Vermelho','Verde','Azul','Amarelo',1),qp('"Azul" significa?','Verde','Vermelho','Azul','Preto',2),
+qp('"Blanco" significa?','Negro','Branco','Cinza','Marrom',1),qp('"Grande" significa?','Pequeno','Grande','Medio','Minimo',1),
+qp('"Bueno" significa?','Ruim','Bom','Regular','Terrible',1),qp('"Malo" significa?','Bom','Ruim','Excelente','Medio',1),
+qp('"Feliz" em espanhol?','Triste','Feliz','Enojado','Cansado',1),qp('"Triste" significa?','Feliz','Triste','Contente','Alegre',1),
+qp('"Enojado" significa?','Calmado','Bravo/Zangado','Feliz','Tranquilo',1),qp('"Cansado" significa?','Energico','Cansado','Animado','Descansado',1),
+qp('"Hambre" significa?','Sede','Fome','Sono','Dor',1),qp('"Sed" significa?','Fome','Sede','Dor','Sono',1),
+qp('"Enfermo" significa?','Saudavel','Doente','Curado','Forte',1),qp('"Saludable" significa?','Doente','Saudavel','Fraco','Cansado',1),
+qp('"Rico" (dinheiro) significa?','Pobre','Rico','Mediano','Endividado',1),qp('"Pobre" significa?','Rico','Pobre','Generoso','Avido',1),
+qp('"Joven" significa?','Velho','Jovem','Adulto','Crianca',1),qp('"Viejo" significa?','Novo','Velho','Jovem','Moderno',1),
+qp('"Nuevo" significa?','Velho','Novo','Usado','Antigo',1),qp('"Alto" significa?','Baixo','Alto','Gordo','Magro',1),
+qp('"Bajo" significa?','Alto','Baixo','Medio','Grande',1),qp('"Rapido" significa?','Lento','Rapido','Parado','Tranquilo',1),
+qp('"Lento" significa?','Rapido','Lento','Apressado','Veloz',1),qp('"Temprano" significa?','Tarde','Cedo','No meio','No final',1),
+qp('"Tarde" significa?','Cedo','Tarde','No horario','Adiantado',1),qp('"Ahora" significa?','Ontem','Agora','Amanha','Mais tarde',1),
+qp('"Ayer" significa?','Amanha','Hoje','Ontem','Semana passada',2),qp('"Manana" significa?','Ontem','Hoje','Amanha','Mes que vem',2),
+qp('"Siempre" significa?','Nunca','As vezes','Sempre','Raramente',2),qp('"Nunca" significa?','Sempre','Nunca','As vezes','Geralmente',1),
+qp('"A veces" significa?','Nunca','Sempre','As vezes','Geralmente',2),qp('"Ya" significa?','Ainda nao','Ja','Nunca','Sempre',1),
+qp('"Pronto" significa?','Nao preparado','Pronto','Atrasado','Cansado',1),qp('"Ocupado" significa?','Livre','Ocupado','Relaxado','Tranquilo',1),
+qp('"Libre" significa?','Ocupado','Livre','Caro','Escasso',1),qp('"Cerrado" significa?','Aberto','Fechado','Quebrado','Novo',1),
+qp('"Abierto" significa?','Fechado','Aberto','Trancado','Quebrado',1),qp('"Lleno" significa?','Vazio','Cheio','Metade','Quase',1),
+qp('"Vacio" significa?','Cheio','Vazio','Completo','Lotado',1),qp('"Limpio" significa?','Sucio','Limpo','Organizado','Baguncado',1),
+qp('"Sucio" significa?','Limpio','Sujo','Organizado','Novo',1),qp('"Seguro" significa?','Perigoso','Seguro','Arriscado','Fraco',1),
+qp('"Peligroso" significa?','Seguro','Perigoso','Facil','Boring',1),qp('"Fuerte" significa?','Fraco','Forte','Debil','Delicado',1),
+qp('"Debil" significa?','Forte','Fraco','Energico','Potente',1),qp('"Frio" significa?','Quente','Frio','Morno','Fresco',1),
+qp('"Caliente" significa?','Frio','Quente','Gelado','Fresco',1),qp('"Oscuro" significa?','Claro','Escuro','Brilhante','Colorido',1),
+qp('"Claro" significa?','Escuro','Claro/Brilhante','Opaco','Suave',1),qp('"Seco" significa?','Molhado','Seco','Umido','Encharcado',1),
+qp('"Mojado" significa?','Seco','Molhado','Enxuto','Ressecado',1),qp('"Fresco" significa?','Estragado','Fresco','Velho','Podre',1),
+qp('"Dulce" significa?','Amargo','Doce','Salgado','Azedo',1),qp('"Amargo" significa?','Doce','Amargo','Salgado','Azedo',1),
+qp('"Salado" significa?','Doce','Amargo','Salgado','Azedo',2),qp('"Picante" significa?','Doce','Salgado','Picante','Sem gosto',2),
+qp('"Delicioso" significa?','Horrible','Delicioso','Ruim','Sem graça',1),qp('"Cerca" significa?','Longe','Perto','Distante','Ao lado',1),
+qp('"Lejos" significa?','Perto','Longe','Ao lado','Dentro',1),qp('"Aqui" significa?','Ali','La','Aqui','Acola',2),
+qp('"Debajo de" significa?','Em cima de','Debaixo de','Ao lado de','Dentro de',1),qp('"Encima de" significa?','Debaixo de','Em cima de','Ao lado','Dentro',1),
+qp('"Al lado de" significa?','Em cima','Debaixo','Ao lado de','Dentro de',2),qp('"Dentro de" significa?','Fora de','Dentro de','Em cima','Atras de',1),
+qp('"Detras de" significa?','Na frente de','Atras de','Ao lado','Dentro',1),qp('"Delante de" significa?','Atras de','Na frente de','Ao lado','Dentro',1),
+qp('"Hacia" significa?','De','Para/Em direcao a','Com','Sem',1),qp('"Desde" significa?','Ate','Desde','Para','Sem',1),
+qp('"Hasta" significa?','Desde','Ate','Para','Com',1),qp('"Con" significa?','Sem','Com','Para','Contra',1),
+qp('"Sin" significa?','Com','Sem','Para','Contra',1),qp('"Para" significa?','Contra','Por/Para','Sem','De',1),
+qp('"Por" significa?','Para','Por/De','Con','Sin',1),qp('"Pero" significa?','Y','Pero (mas)','O','Porque',1),
+qp('"Y" significa?','Pero','Y (e)','O','Ni',1),qp('"Tambien" significa?','Tampoco','Tambien','Nunca','Siempre',1),
+qp('"Tampoco" significa?','Tambien','Tampoco','Siempre','Nunca',1),qp('"Quizas" significa?','Seguro','Talvez','Nunca','Siempre',1),
+qp('"Claro" (certeza) significa?','Talvez','Claro/Sim','Nao','Duvido',1),
+qp('"Cocinar" significa?','Lavar','Cozinhar','Limpar','Dormir',1),
+qp('"Dormir" significa?','Acordar','Dormir','Comer','Beber',1),
+qp('"Despertar" significa?','Dormir','Despertar/Acordar','Comer','Trabalhar',1),
+qp('"Caminar" significa?','Correr','Caminhar/Andar','Voar','Nadar',1),
+qp('"Correr" significa?','Caminhar','Correr','Parar','Sentar',1),
+qp('"Nadar" significa?','Correr','Nadar','Voar','Pular',1),
+qp('"Escribir" significa?','Leer','Escribir','Hablar','Oir',1),
+qp('"Leer" significa?','Escribir','Leer','Hablar','Cantar',1),
+qp('"Hablar" significa?','Oir','Hablar','Escribir','Leer',1),
+qp('"Escuchar" significa?','Hablar','Oir','Ver','Tocar',1),
+qp('"Ver" significa?','Oir','Ver','Sentir','Cheirar',1),
+qp('"Pensar" significa?','Olvidar','Pensar','Recordar','Imaginar',1),
+qp('"Recordar" significa?','Olvidar','Lembrar/Recordar','Pensar','Dormir',1),
+qp('"Olvidar" significa?','Recordar','Esquecer','Pensar','Recordar',1),
+qp('"Ganar" significa?','Perder','Ganhar','Empatar','Jogar',1),
+qp('"Perder" significa?','Ganhar','Perder','Encontrar','Salvar',1),
+qp('"Trabajar" significa?','Descansar','Trabalhar','Jugar','Dormir',1),
+qp('"Estudiar" significa?','Trabajar','Estudar','Jugar','Descansar',1),
+qp('"Jugar" significa?','Trabajar','Estudar','Jogar/Brincar','Dormir',2),
+qp('"Comprar" significa?','Vender','Comprar','Prestar','Pagar',1),
+qp('"Vender" significa?','Comprar','Vender','Pegar','Devolver',1),
+qp('"Pagar" significa?','Cobrar','Pagar','Recibir','Ganhar',1),
+qp('"Ayudar" significa?','Perjudicar','Ayudar','Ignorar','Molestar',1),
+qp('"Necesitar" significa?','Tener bastante','Necesitar/Precisar','Rechazar','Olvidar',1)
+]},
+pontuacao:{name:'Pontuacao e Gramatica',icon:'fa-ellipsis-h',color:'#E17055',questions:[
+qp('Usa-se crase antes de palavras femininas?','Sim, se for "a" + artigo "a"','Nunca','So com H','So no plural',0),
+qp('"Fui a escola" leva crase?','Sim','Nao (escola sem artigo)','Depende','So no plural',1),
+qp('"Fui a praia" leva crase?','Sim','Nao (praia sem artigo)','Depende','Sempre',1),
+qp('"Referi-me a aluno" leva crase?','Sim','Nao (aluno e masculino)','Depende','Sempre',1),
+qp('"Vou a TV assistir" leva crase?','Sim','Nao (TV sem artigo)','Depende','Sempre',1),
+qp('"Chegou a hora" leva crase?','Sim','Nao (hora sem artigo neste contexto)','Depende','Sempre',1),
+qp('"Foi a Roma" leva crase?','Nao (cidade sem artigo)','Sim','Depende','Sempre',0),
+qp('"Voltou a Bahia" leva crase?','Nao (Bahia sem artigo)','Sim','Depende','So com crase',0),
+qp('Crase antes de verbo?','Sim','Nao (verbos nao admitem artigo)','Depende','Sempre',1),
+qp('Crase em "a moda de"?','Sim: a moda da italiana','Nao','Depende','Nunca',0),
+qp('Virgula separa?','Ideias relacionadas numa lista','Palavras diferentes','Frases sem relacao','So numeros',0),
+qp('"Joao Maria Pedro" usa virgula?','Sim: Joao, Maria, Pedro','Nao','So com e','Depende',0),
+qp('Virgula antes de "e" numera?','Nao entre dois termos, mas sim entre tres ou mais','Sim sempre','Nunca','Depende',0),
+qp('Virgula isola vocativo?','Sim: "Joao, venha aqui"','Nao','Depende','Nunca',0),
+qp('"No entanto" usa virgula antes?','Sim, depois ou antes e depois','Nao','Depende','Nunca',0),
+qp('Ponto final indica?','Fim de frase declarativa','Pergunta','Exclamacao','Continuacao',0),
+qp('Ponto final e usado apos?','Frase completa','Virgula','Interrogacao','Reticencias',0),
+qp('"Que bonito!" usa?','Ponto de exclamacao','Ponto final','Interrogacao','Reticencias',0),
+qp('Exclamacao exprime?','Surpresa, alegria, raiva','Duvida','Indiferenca','Tristeza',0),
+qp('"Voce vai?" usa?','Ponto de interrogacao','Exclamacao','Ponto final','Virgula',0),
+qp('Interrogacao direta usa?','? no final da frase','! no final','. no final',', no final',0),
+qp('Dois pontos servem para?','Introduzir explicacao, lista, citacao','Separar palavras','Terminar frase','Fazer pergunta',0),
+qp('Apos "Exemplo:" usamos?','Dois pontos','Virgula','Ponto','Ponto e virgula',0),
+qp('Ponto e virgula separa?','Oracoes com relacao mas independentes','Palavras de uma lista','Frases sem relacao','So numeros',0),
+qp('Diferenca de virgula e ponto e virgula?','Ponto e virgula da mais pausa','Sao iguais','Virgula da mais pausa','Nenhuma diferenca',0),
+qp('Aspas servem para?','Citacoes, dialogos, enfase','Separar palavras','Terminar frase','Fazer pergunta',0),
+qp('"Ele disse: ola" usa?','Aspas','Parenteses','Reticencias','Nada',0),
+qp('Apostrofo indica?','Supressao de letra em poesia','Aspa simples','Virgula','Reticencias',0),
+qp('"Por escravo" -> "p\'escravo\'" usa?','Apostrofo','Aspa','Virgula','Nada',0),
+qp('Acento agudo marca?','Vogal aberta A E O ou I U em oxitonas/monossilabos','Vogal fechada','Nasal','Crase',0),
+qp('Acento grave indica?','Fusao de preposicao "a" + artigo "a"','Vogal aberta','Vogal fechada','Nasal',0),
+qp('O simbolo da crase e?','` (acento grave)','´ (acento agudo)','^ (circunflexo)','~ (til)',0),
+qp('"Secao" significa?','Parte/divisao de um todo','Encontro/reuniao','Acao de sentar','Pecado',0),
+qp('"Sessao" significa?','Encontro/reuniao (sessao de cinema)','Parte de um livro','Acao de sentar','Direcao',0),
+qp('"Secao de esportes" usa?','Secao','Sessao','Cessao','Secao e Sessao',0),
+qp('"Sessao do Congresso" usa?','Sessao','Secao','Cessao','Secao e Sessao',0),
+qp('"Cessao" significa?','Ato de ceder/transferir','Parte de livro','Reuniao','Acao de sentar',0),
+qp('"Cessao de direitos" usa?','Cessao','Secao','Sessao','Todas servem',0),
+qp('"Casa" e?','Substantivo','Adjetivo','Verbo','Adverbio',0),
+qp('"Bonita" e?','Adjetivo','Substantivo','Verbo','Adverbio',0),
+qp('"Carro" e?','Substantivo','Adjetivo','Verbo','Adverbio',0),
+qp('"Rapido" em "carro rapido" e?','Adjetivo','Substantivo','Adverbio','Verbo',0),
+qp('"Brasil" e?','Substantivo proprio','Adjetivo','Verbo','Adverbio',0),
+qp('"Felicidade" e?','Substantivo abstrato','Adjetivo','Verbo','Adverbio',0),
+qp('"Verde" em "mata verde" e?','Adjetivo','Substantivo','Verbo','Adverbio',0),
+qp('"Amor" e?','Substantivo abstrato','Adjetivo','Verbo','Adverbio',0),
+qp('"Dureza" e?','Substantivo abstrato','Adjetivo','Verbo','Adverbio',0),
+qp('"Gentil" e?','Adjetivo','Substantivo','Verbo','Adverbio',0),
+qp('"Voce sabe" - o "ce" em voce vem de?','Vossa Merce (contracao)','Sem origem','Do latim','Do grego',0),
+qp('"Ce" e forma reduzida de?','Voce','Ninguem','Alguem','Isso',0),
+qp('"Se" como pronome reflexivo?','Ele se cortou','Se chove','Se pode','Se voce',0),
+qp('"Se" como conjuncao condicional?','Se chover, nao vou','Ele se cortou','Sei que nao','Veja se',0),
+qp('"Se" como parte integrante do verbo?','Sei (nao e pronome)','Ele se cortou','Se chove','Se voce',0),
+qp('"SC" aparece em?','Nascer, crescer, descer','Certo, cidade','Passar, carregar','Nenhuma',0),
+qp('"Quanto" exprime?','Quantidade/intensidade','Tempo','Lugar','Modo',0),
+qp('"Quando" exprime?','Tempo','Quantidade','Lugar','Modo',1),
+qp('"Quanto custa?" pergunta sobre?','Preco (quantidade)','Tempo','Lugar','Pessoa',0),
+qp('"Quando voce chega?" pergunta sobre?','Tempo','Quantidade','Lugar','Modo',0),
+qp('"Quanto mais estuda" e?','Proporcao','Tempo','Lugar','Causa',0),
+qp('"Que" sem acento e usado quando?','Dentro de frase (nao e tonico)','No fim de frase','Sozinho','Antes de ponto',0),
+qp('"Que" e "Quê" - qual leva acento?','Quê no fim de frase ou antes de ponto','Que sempre','Quê sempre','Nenhum',0),
+qp('"Voce tem quê?" usa?','Quê (antes de ?)','Que','Nenhum','Ambos',0),
+qp('"Eu disse que sim" usa?','Que (nao e tonico)','Quê','Nenhum','Ambos',0),
+qp('"Tras" significa?','Atras (lugar/posicao)','Verbo trazer','Frente','Dentro',0),
+qp('"Traz" significa?','Verbo trazer (3a pessoa)','Atras','Frente','Dentro',0),
+qp('"Ele traz o livro" usa?','Traz (verbo)','Tras (lugar)','Ambos','Nenhum',1),
+qp('"Olhe para tras" usa?','Tras (lugar)','Traz (verbo)','Ambos','Nenhum',0),
+qp('"Tras da casa havia um quintal" usa?','Tras','Traz','Ambos','Nenhum',0),
+qp('"A carrocinha traz cachorros" usa?','Traz (verbo)','Tras (lugar)','Ambos','Nenhum',1)
+]}
+};
+
+/* ===== CONHECIMENTOS GERAIS - JOGO (com shuffle dinamico PRESERVANDO pergunta) ===== */
+const Geral={subject:null,questions:[],qIdx:0,correct:0,
+init(){const g=document.getElementById('geralGrid');g.innerHTML='';Object.keys(geralData).forEach(k=>{const d=geralData[k],p=state.geral[k]||0,div=document.createElement('div');div.className='card p-5';div.innerHTML=`<div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-white" style="background:${d.color}"><i class="fas ${d.icon}"></i></div><div><div class="font-bold">${d.name}</div><div class="text-xs text-[var(--muted)]">${d.questions.length} perguntas</div></div></div><div class="xp-bar mt-2"><div class="xp-fill" style="width:${(p/d.questions.length*100)}%;background:${d.color}"></div></div><div class="text-xs text-[var(--muted)] mt-1 font-bold">${p}/${d.questions.length} acertos</div>`;div.onclick=()=>this.start(k);g.appendChild(div)})},
+start(k){this.subject=k;this.questions=geralData[k].questions.map(q=>{const sh=shuffleOpts(q.o,q.a);return{q:q.q,o:sh.o,a:sh.a}});for(let i=this.questions.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[this.questions[i],this.questions[j]]=[this.questions[j],this.questions[i]]}this.qIdx=0;this.correct=0;document.getElementById('gjSubject').textContent=geralData[k].name;this.renderQ();showScreen('geral-play')},
+renderQ(){if(this.qIdx>=this.questions.length){this.finish();return}const q=this.questions[this.qIdx];document.getElementById('gjProgress').textContent=(this.qIdx+1)+'/'+this.questions.length;document.getElementById('gjQuestion').textContent=q.q;const g=document.getElementById('gjOptions');g.innerHTML='';q.o.forEach((o,i)=>{const b=document.createElement('button');b.className='option-btn';b.textContent=o;b.onclick=()=>this.answer(i,b);g.appendChild(b)})},
+answer(i,b){const q=this.questions[this.qIdx],c=i===q.a;document.querySelectorAll('#gjOptions .option-btn').forEach((x,j)=>{x.disabled=true;if(j===q.a)x.classList.add('correct');if(j===i&&!c)x.classList.add('wrong')});if(c){this.correct++;addStreak();playSound('correct');const r=b.getBoundingClientRect();showXPFloat(10,r.left,r.top-20)}else{resetStreak();playSound('wrong')}setTimeout(()=>{this.qIdx++;this.renderQ()},900)},
+finish(){state.geral[this.subject]=Math.max(state.geral[this.subject]||0,this.correct);saveState();showResult(this.correct,this.questions.length,()=>this.start(this.subject),()=>this.init())}};
+
+/* ===== ARRASTA E SOLTA - 9 MODOS ===== */
+const arrastaModes={
+silabas:{label:'Silabas',info:'<strong>Silabas:</strong> Divisao de uma palavra em partes sonoras pronunciadas numa so emissao de voz. Ex: CA-CHO-RRO (3 silabas), BO-RBO-LE-TA (4 silabas). Monte a palavra juntando as silabas na ordem correta.',items:[
+{word:'CACHORRO',syl:['CA','CHO','RRO'],pool:['CA','CHO','RRO']},{word:'BORBOLETA',syl:['BOR','BO','LE','TA'],pool:['BOR','BO','LE','TA']},{word:'ESCOLA',syl:['ES','CO','LA'],pool:['ES','CO','LA']},
+{word:'CHOCOLATE',syl:['CHO','CO','LA','TE'],pool:['CHO','CO','LA','TE']},{word:'DINOSSAURO',syl:['DI','NOS','SAU','RO'],pool:['DI','NOS','SAU','RO']},{word:'AQUARIO',syl:['A','QUA','RIO'],pool:['A','QUA','RIO']},
+{word:'PAPAGAIO',syl:['PA','PA','GA','IO'],pool:['PA','PA','GA','IO']},{word:'CORUJA',syl:['CO','RU','JA'],pool:['CO','RU','JA']},{word:'JABUTICABA',syl:['JA','BU','TI','CA','BA'],pool:['JA','BU','TI','CA','BA']},
+{word:'TARTARUGA',syl:['TAR','TA','RU','GA'],pool:['TAR','TA','RU','GA']},{word:'ABACAXI',syl:['A','BA','CA','XI'],pool:['A','BA','CA','XI']},{word:'PIRILAMPO',syl:['PI','RI','LAM','PO'],pool:['PI','RI','LAM','PO']},
+{word:'GIRASSOL',syl:['GI','RA','SSOL'],pool:['GI','RA','SSOL']},{word:'SAMAMBAIA',syl:['SA','MAM','BAIA'],pool:['SA','MAM','BAIA']},{word:'JACARE',syl:['JA','CA','RE'],pool:['JA','CA','RE']},
+{word:'COMPUTADOR',syl:['COM','PU','TA','DOR'],pool:['COM','PU','TA','DOR']},{word:'LANCHONETE',syl:['LAN','CHO','NE','TE'],pool:['LAN','CHO','NE','TE']},{word:'SAPATILHA',syl:['SA','PA','TI','LHA'],pool:['SA','PA','TI','LHA']},
+{word:'AMENDOIM',syl:['A','MEN','DOIM'],pool:['A','MEN','DOIM']},{word:'MARACUJA',syl:['MA','RA','CU','JA'],pool:['MA','RA','CU','JA']}
+]},
+vogais:{label:'Vogais',info:'<strong>Vogais:</strong> Sao A, E, I, O, U — sons produzidos com a boca aberta sem obstrucao. Complete as palavras com as vogais corretas.',items:[
+{template:'G_T_',answer:['A','O'],word:'GATO',pool:['A','O','E','I']},{template:'B_L_',answer:['O','A'],word:'BOLA',pool:['O','A','U','E']},
+{template:'C_S_',answer:['A','A'],word:'CASA',pool:['A','A','O','I']},{template:'F_T_',answer:['O','O'],word:'FOTO',pool:['O','O','A','U']},
+{template:'P_T_',answer:['A','O'],word:'PATO',pool:['A','O','E','I']},{template:'R_T_',answer:['A','O'],word:'RATO',pool:['A','O','U','E']},
+{template:'S_P_',answer:['O','A'],word:'SOPA',pool:['O','A','I','E']},{template:'_N_L',answer:['A','E'],word:'ANEL',pool:['A','E','O','U']},
+{template:'M_R',answer:['A'],word:'MAR',pool:['A','E','O','U']},{template:'S_L',answer:['O'],word:'SOL',pool:['O','A','E','I']},
+{template:'M_L',answer:['E'],word:'MEL',pool:['E','A','O','U']},{template:'FL_R',answer:['O'],word:'FLOR',pool:['O','A','E','U']},
+{template:'_R__I',answer:['A','E'],word:'AREIA',pool:['A','E','I','O']},{template:'C_MP_',answer:['A','O'],word:'CAMPO',pool:['A','O','E','U']},
+{template:'P_RT_',answer:['O','A'],word:'PORTA',pool:['O','A','I','E']}
+]},
+consoantes:{label:'Consoantes',info:'<strong>Consoantes:</strong> Sao B, C, D, F, G, H, J, K, L, M, N, P, Q, R, S, T, V, W, X, Y, Z — sons produzidos com obstrucao do ar. Complete com a consoante certa.',items:[
+{template:'_ATO',answer:['G'],word:'GATO',pool:['G','C','B','D']},{template:'_OLA',answer:['B'],word:'BOLA',pool:['B','V','P','D']},
+{template:'_ASA',answer:['C'],word:'CASA',pool:['C','K','S','Z']},{template:'_OTO',answer:['F'],word:'FOTO',pool:['F','V','P','T']},
+{template:'_ATO',answer:['P'],word:'PATO',pool:['P','B','T','D']},{template:'_ATO',answer:['R'],word:'RATO',pool:['R','L','M','N']},
+{template:'_OPA',answer:['S'],word:'SOPA',pool:['S','Z','C','T']},{template:'_NEL',answer:['A'],word:'ANEL',pool:['A','M','N','L']},
+{template:'_AR',answer:['M'],word:'MAR',pool:['M','N','P','T']},{template:'_OL',answer:['S'],word:'SOL',pool:['S','Z','C','D']},
+{template:'_EL',answer:['M'],word:'MEL',pool:['M','N','P','V']},{template:'LOR',answer:['F'],word:'FLOR',pool:['F','V','P','T']},
+{template:'_AO',answer:['C'],word:'CAO',pool:['C','G','T','D']},{template:'_ITO',answer:['L'],word:'LITO',pool:['L','R','S','V']},
+{template:'_AVE',answer:['G'],word:'GRAVE',pool:['G','C','V','B']},{template:'_URO',answer:['T'],word:'TURO',pool:['T','D','R','L']},
+{template:'_EO',answer:['C'],word:'CEO',pool:['C','G','T','D']},{template:'_ILHA',answer:['F'],word:'FILHA',pool:['F','V','P','T']},
+{template:'_ORTE',answer:['P'],word:'PORTE',pool:['P','B','T','D']},{template:'_ISA',answer:['M'],word:'MISA',pool:['M','N','P','V']}
+]},
+fonemas:{label:'Fonemas',info:'<strong>Fonema:</strong> Unidade sonora minima que distingue significados. "CH" = 1 fonema, "RR" = 1 fonema, "X" pode ter varios sons. Identifique quantos fonemas.',items:[
+{word:'CA',pergunta:'Quantos fonemas em "CA"?',pool:['1','2','3','4'],answer:'2'},{word:'GATO',pergunta:'Quantos fonemas em "GATO"?',pool:['3','4','5','6'],answer:'4'},
+{word:'CHAVE',pergunta:'Quantos fonemas em "CHAVE"? (CH=1 fonema)',pool:['3','4','5','6'],answer:'4'},{word:'CARRO',pergunta:'Quantos fonemas em "CARRO"? (RR=1 fonema)',pool:['3','4','5','6'],answer:'4'},
+{word:'EXATO',pergunta:'Quantos fonemas em "EXATO"?',pool:['4','5','6','7'],answer:'5'},{word:'TAXI',pergunta:'Quantos fonemas em "TAXI"? (X=/S/)',pool:['3','4','5','6'],answer:'4'},
+{word:'NINHO',pergunta:'Quantos fonemas em "NINHO"? (NH=1 fonema)',pool:['3','4','5','6'],answer:'4'},{word:'SAPATO',pergunta:'Quantos fonemas em "SAPATO"?',pool:['4','5','6','7'],answer:'5'},
+{word:'BRUXA',pergunta:'Quantos fonemas em "BRUXA"? (X=/S/)',pool:['4','5','6','7'],answer:'5'},{word:'QUENTE',pergunta:'Quantos fonemas em "QUENTE"? (U nao soa)',pool:['4','5','6','7'],answer:'5'},
+{word:'GUITARRA',pergunta:'Quantos fonemas em "GUITARRA"? (RR=1)',pool:['5','6','7','8'],answer:'6'},{word:'PNEU',pergunta:'Quantos fonemas em "PNEU"? (P nao soa)',pool:['3','4','5','6'],answer:'4'}
+]},
+semivogais:{label:'Semivogais',info:'<strong>Semivogais:</strong> Sons /i/ e /u/ mais fracos em ditongos. Em "PAI" o "i" e semivogal. Em "SAUde" o "u" e semivogal. Em "PAO" o "o" e semivogal.',items:[
+{word:'PAI',pergunta:'Qual e a semivogal em "PAI"?',pool:['A','E','I','U'],answer:'I'},{word:'SAUDE',pergunta:'Qual e a semivogal em "SAUDE"?',pool:['A','E','I','U'],answer:'U'},
+{word:'PAO',pergunta:'Qual e a semivogal em "PAO"?',pool:['A','E','O','U'],answer:'O'},{word:'HEROI',pergunta:'Qual e a semivogal em "HEROI"?',pool:['E','O','I','U'],answer:'I'},
+{word:'PAPEL',pergunta:'Tem semivogal em "PAPEL"?',pool:['A','E','Nenhuma','I'],answer:'Nenhuma'},{word:'TROVA',pergunta:'Tem semivogal em "TROVA"?',pool:['O','A','Nenhuma','U'],answer:'Nenhuma'},
+{word:'PARAISO',pergunta:'Qual e a semivogal em "PARAISO"?',pool:['A','O','I','U'],answer:'I'},{word:'GLORIA',pergunta:'Qual e a semivogal em "GLORIA"?',pool:['O','A','I','U'],answer:'I'},
+{word:'SAUDADE',pergunta:'Qual e a semivogal em "SAUDADE"?',pool:['A','E','U','I'],answer:'U'},{word:'VOU',pergunta:'Qual e a semivogal em "VOU"?',pool:['O','A','U','E'],answer:'U'},
+{word:'CAI',pergunta:'Qual e a semivogal em "CAI"?',pool:['A','I','E','O'],answer:'I'},{word:'MEI',pergunta:'Qual e a semivogal em "MEI"?',pool:['E','I','O','A'],answer:'I'},
+{word:'DOU',pergunta:'Qual e a semivogal em "DOU"?',pool:['O','U','A','I'],answer:'U'},{word:'GRAU',pergunta:'Qual e a semivogal em "GRAU"?',pool:['A','R','U','O'],answer:'U'},
+{word:'POEIRA',pergunta:'Qual e a semivogal em "POEIRA"?',pool:['O','E','I','A'],answer:'I'},{word:'CELULA',pergunta:'Qual e a semivogal em "CELULA"?',pool:['E','L','U','A'],answer:'U'}
+]},
+silaba_tonica:{label:'Silaba Tônica',info:'<strong>Silaba Tonica:</strong> A silaba mais forte. Oxitona=ultima, Paroxitona=penultima, Proparoxitona=antepenultima.',items:[
+{word:'CAFÉ',pergunta:'Qual a silaba tonica de "CAFÉ"?',pool:['CA','FÉ','Nenhuma','Duas'],answer:'FÉ'},{word:'AVÓ',pergunta:'Qual a silaba tonica de "AVÓ"?',pool:['A','VÓ','Nenhuma','Duas'],answer:'VÓ'},
+{word:'CACHORRO',pergunta:'Qual a silaba tonica de "CACHORRO"?',pool:['CA','CHO','RRO','Duas'],answer:'CHO'},{word:'JABUTICABA',pergunta:'Qual a silaba tonica de "JABUTICABA"?',pool:['JA','BU','TI','CA'],answer:'TI'},
+{word:'LÁPIS',pergunta:'Qual a silaba tonica de "LÁPIS"?',pool:['LÁ','PIS','Nenhuma','Duas'],answer:'LÁ'},{word:'COMPUTADOR',pergunta:'Qual a silaba tonica de "COMPUTADOR"?',pool:['COM','PU','TA','DOR'],answer:'TA'},
+{word:'MÚSICA',pergunta:'Qual a silaba tonica de "MÚSICA"?',pool:['MÚ','SI','CA','Nenhuma'],answer:'MÚ'},{word:'LÁRANJEIRA',pergunta:'Qual a silaba tonica de "LARANJEIRA"?',pool:['LÁ','RAN','JA','REIRA'],answer:'JA'},
+{word:'MEDICINA',pergunta:'Qual a silaba tonica de "MEDICINA"?',pool:['ME','DI','CI','NA'],answer:'DI'},{word:'SAÚDE',pergunta:'Qual a silaba tonica de "SAÚDE"?',pool:['SA','Ú','DE','Nenhuma'],answer:'Ú'},
+{word:'BRIGADEIRO',pergunta:'Qual a silaba tonica de "BRIGADEIRO"?',pool:['BRI','GA','DEI','RO'],answer:'DEI'},{word:'CORAGEM',pergunta:'Qual a silaba tonica de "CORAGEM"?',pool:['CO','RA','GEM','Nenhuma'],answer:'RA'},
+{word:'LÂMPADA',pergunta:'Qual a silaba tonica de "LÂMPADA"?',pool:['LÂM','PA','DA','Nenhuma'],answer:'LÂM'},{word:'ALFABETO',pergunta:'Qual a silaba tonica de "ALFABETO"?',pool:['AL','FA','BE','TO'],answer:'FA'},
+{word:'TELEVISÃO',pergunta:'Qual a silaba tonica de "TELEVISÃO"?',pool:['TE','LE','VI','SÃO'],answer:'VI'},{word:'MATEMÁTICA',pergunta:'Qual a silaba tonica de "MATEMÁTICA"?',pool:['MA','TE','MÁ','TI'],answer:'MÁ'}
+]},
+encontros_vocalicos:{label:'Encontros Vocálicos',info:'<strong>Encontros Vocálicos:</strong> <b>Ditongo</b>=2 vogais mesma silaba. <b>Tritongo</b>=3 vogais mesma silaba. <b>Hiato</b>=2 vogais silabas diferentes.',items:[
+{word:'PAIS',pergunta:'Encontro vocalico em "PAIS"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Ditongo'},{word:'SAÚDE',pergunta:'Encontro vocalico em "SAÚDE"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Hiato'},
+{word:'PARAGUAI',pergunta:'Encontro vocalico em "PARAGUAI"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Tritongo'},{word:'HEROI',pergunta:'Encontro vocalico em "HEROI"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Ditongo'},
+{word:'RAÍZ',pergunta:'Encontro vocalico em "RAÍZ"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Hiato'},{word:'PEIXE',pergunta:'Encontro vocalico em "PEIXE"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Ditongo'},
+{word:'SANGUE',pergunta:'Encontro vocalico em "SANGUE"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Ditongo'},{word:'POÉTICO',pergunta:'Encontro vocalico em "POÉTICO"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Hiato'},
+{word:'IGUAL',pergunta:'Encontro vocalico em "IGUAL"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Ditongo'},{word:'SAUDAR',pergunta:'Encontro vocalico em "SAUDAR"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Ditongo'},
+{word:'ESVAZIAR',pergunta:'Encontro vocalico em "ESVAZIAR"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Hiato'},{word:'AMBÍGUO',pergunta:'Encontro vocalico em "AMBÍGUO"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Ditongo'},
+{word:'FÓRUM',pergunta:'Encontro vocalico em "FÓRUM"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Nenhum'},{word:'TAPETE',pergunta:'Encontro vocalico em "TAPETE"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Nenhum'},
+{word:'JIBÓIA',pergunta:'Encontro vocalico em "JIBÓIA"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Hiato'},{word:'ARCO-ÍRIS',pergunta:'Encontro vocalico em "ARCO-ÍRIS"?',pool:['Ditongo','Tritongo','Hiato','Nenhum'],answer:'Hiato'}
+]},
+encontros_consonantais:{label:'Encontros Cons.',info:'<strong>Encontros Consonantais:</strong> <b>Perfeito</b>=na mesma silaba (PLE-to, FRA-se). <b>Imperfeito</b>=silabas diferentes (PAS-ta, CA-cho-rro).',items:[
+{word:'PNEU',pergunta:'Encontro consonantal em "PNEU"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'},{word:'PASTA',pergunta:'Encontro consonantal em "PASTA"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Imperfeito'},
+{word:'FROTA',pergunta:'Encontro consonantal em "FROTA"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'},{word:'PRATO',pergunta:'Encontro consonantal em "PRATO"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'},
+{word:'PESCAR',pergunta:'Encontro consonantal em "PESCAR"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Imperfeito'},{word:'TRAVESSEIRO',pergunta:'Encontro consonantal em "TRAVESSEIRO"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'},
+{word:'BLOCO',pergunta:'Encontro consonantal em "BLOCO"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'},{word:'OBJETO',pergunta:'Encontro consonantal em "OBJETO"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'},
+{word:'PLANETA',pergunta:'Encontro consonantal em "PLANETA"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'},{word:'VESTIDO',pergunta:'Encontro consonantal em "VESTIDO"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Imperfeito'},
+{word:'GRANDE',pergunta:'Encontro consonantal em "GRANDE"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'},{word:'DRAGÃO',pergunta:'Encontro consonantal em "DRAGÃO"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'},
+{word:'FATURA',pergunta:'Encontro consonantal em "FATURA"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Nenhum'},{word:'EXCEÇÃO',pergunta:'Encontro consonantal em "EXCEÇÃO"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Imperfeito'},
+{word:'TROMBADA',pergunta:'Encontro consonantal em "TROMBADA"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'},{word:'CAPTAR',pergunta:'Encontro consonantal em "CAPTAR"?',pool:['Perfeito','Imperfeito','Nenhum','Digrafo'],answer:'Perfeito'}
+]},
+digrafos:{label:'Dígrafos',info:'<strong>Dígrafos:</strong> Duas letras = um fonema. <b>Consonantais:</b> RR, SS, CH, LH, NH. <b>Vocálicos:</b> AM, AN, EM, EN (nasalizam a vogal).',items:[
+{word:'CARRO',pergunta:'Qual o digrafo em "CARRO"?',pool:['RR','SS','CH','NH'],answer:'RR'},{word:'PASSAR',pergunta:'Qual o digrafo em "PASSAR"?',pool:['RR','SS','CH','LH'],answer:'SS'},
+{word:'CHAVE',pergunta:'Qual o digrafo em "CHAVE"?',pool:['RR','SS','CH','NH'],answer:'CH'},{word:'FILHO',pergunta:'Qual o digrafo em "FILHO"?',pool:['LH','NH','CH','RR'],answer:'LH'},
+{word:'NINHO',pergunta:'Qual o digrafo em "NINHO"?',pool:['LH','NH','CH','SS'],answer:'NH'},{word:'CAMPO',pergunta:'Digrafo vocálico em "CAMPO"? (AM nasaliza)',pool:['AM','EN','EM','AN'],answer:'AM'},
+{word:'CANTO',pergunta:'Digrafo vocálico em "CANTO"? (AN nasaliza)',pool:['AM','AN','EM','EN'],answer:'AN'},{word:'TEMPO',pergunta:'Digrafo vocálico em "TEMPO"? (EM nasaliza)',pool:['AM','AN','EM','EN'],answer:'EM'},
+{word:'MENTE',pergunta:'Digrafo vocálico em "MENTE"? (EN nasaliza)',pool:['AM','AN','EM','EN'],answer:'EN'},{word:'BANHO',pergunta:'Qual o digrafo em "BANHO"?',pool:['NH','LH','CH','RR'],answer:'NH'},
+{word:'CHUVA',pergunta:'Qual o digrafo em "CHUVA"?',pool:['CH','LH','NH','SS'],answer:'CH'},{word:'GUITARRA',pergunta:'Qual o digrafo em "GUITARRA"?',pool:['RR','SS','CH','QU'],answer:'RR'},
+{word:'PESSEGO',pergunta:'Qual o digrafo em "PESSEGO"?',pool:['SS','RR','CH','NH'],answer:'SS'},{word:'MALHA',pergunta:'Qual o digrafo em "MALHA"?',pool:['LH','NH','CH','RR'],answer:'LH'},
+{word:'TAMPA',pergunta:'Digrafo vocálico em "TAMPA"?',pool:['AM','AN','EM','EN'],answer:'AM'},{word:'DANÇA',pergunta:'Digrafo vocálico em "DANÇA"? (AN nasaliza)',pool:['AM','AN','EM','EN'],answer:'AN'},
+{word:'LENTILHA',pergunta:'Qual o digrafo em "LENTILHA"?',pool:['LH','NH','CH','RR'],answer:'LH'},{word:'CORREIO',pergunta:'Qual o digrafo em "CORREIO"?',pool:['RR','SS','CH','LH'],answer:'RR'},
+{word:'BANDEIRA',pergunta:'Digrafo vocálico em "BANDEIRA"? (AN nasaliza)',pool:['AM','AN','EM','EN'],answer:'AN'},{word:'VIOLÃO',pergunta:'Tem digrafo em "VIOLÃO"?',pool:['LH','NH','NENHUM','CH'],answer:'NENHUM'}
+]}
+};
+
+/* ===== ARRASTA E SOLTA - SISTEMA DRAG AND DROP REFEITO ===== */
+const Arrasta = {
+    mode: 'silabas',
+    current: null,
+    placed: [],
+    selectedPiece: null,
+    pool: [],
+    usedMap: {},
+    dragIdx: null,
+    ghostEl: null,
+
+    init() {
+        const tabs = document.getElementById('arrastaTabs');
+        if (!tabs) return;
+        tabs.innerHTML = '';
+        Object.keys(arrastaModes).forEach(k => {
+            if (!arrastaModes[k]) return;
+            const b = document.createElement('button');
+            b.className = 'tab-btn' + (k === this.mode ? ' active' : '');
+            b.textContent = arrastaModes[k].label || k;
+            b.onclick = () => this.setMode(k, b);
+            tabs.appendChild(b);
+        });
+        document.getElementById('arrastaFeedback').innerHTML = '';
+        this.next();
+    },
+
+    setMode(m, b) {
+        this.mode = m;
+        b.parentElement.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        this.next();
+    },
+
+    next() {
+        /* Guarda 1: verificar se o modo existe */
+        const modeData = arrastaModes[this.mode];
+        if (!modeData) {
+            console.warn('Arrasta: modo não encontrado:', this.mode);
+            return;
+        }
+
+        /* Guarda 2: verificar se há itens disponíveis */
+        const items = modeData.items;
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            console.warn('Arrasta: sem itens para o modo:', this.mode);
+            return;
+        }
+
+        const item = items[Math.floor(Math.random() * items.length)];
+
+        /* Guarda 3: verificar se o item sorteado é válido */
+        if (!item || !item.pool || !Array.isArray(item.pool)) {
+            console.warn('Arrasta: item inválido ou sem pool:', item);
+            return;
+        }
+
+        document.getElementById('arrastaInfo').innerHTML = modeData.info || '';
+        document.getElementById('arrastaFeedback').innerHTML = '';
+        this.current = item;
+        this.selectedPiece = null;
+        this.dragIdx = null;
+        this.usedMap = {};
+
+        const isBuildMode = this.mode === 'silabas' || this.mode === 'vogais' || this.mode === 'consoantes';
+
+        /* Embaralhar o pool */
+        this.pool = [...item.pool];
+        for (let i = this.pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.pool[i], this.pool[j]] = [this.pool[j], this.pool[i]];
+        }
+
+        if (isBuildMode) {
+            /* Guarda 4: garantir que answer seja um array com length acessível */
+            let answerArr;
+            if (Array.isArray(item.answer)) {
+                answerArr = item.answer;
+            } else if (typeof item.answer === 'string' && item.answer.length > 0) {
+                answerArr = item.answer.split('');
+            } else if (Array.isArray(item.syl)) {
+                answerArr = item.syl;
+            } else if (typeof item.syl === 'string' && item.syl.length > 0) {
+                answerArr = item.syl.split('');
+            } else {
+                console.warn('Arrasta: item sem answer/syl válido para modo de montagem:', item);
+                return;
+            }
+            this.placed = new Array(answerArr.length).fill(null);
+        } else {
+            this.placed = null;
+        }
+
+        this.render();
+    },
+
+    reset() {
+        if (this.current) this.next();
+    },
+
+    cleanup() {
+        if (this.ghostEl) {
+            this.ghostEl.remove();
+            this.ghostEl = null;
+        }
+        document.removeEventListener('pointermove', this._onMove);
+        document.removeEventListener('pointerup', this._onUp);
+        document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
+    },
+
+    render() {
+        this.cleanup();
+        const area = document.getElementById('arrastaPlayArea');
+        if (!area) return;
+
+        const isBuildMode = this.mode === 'silabas' || this.mode === 'vogais' || this.mode === 'consoantes';
+
+        if (isBuildMode) {
+            let h = '<div class="card p-6 mb-4"><p class="text-sm font-bold text-[var(--muted)] mb-3">' +
+                (this.mode === 'silabas' ? 'Monte a palavra:' : 'Complete:') + '</p>' +
+                '<div class="flex gap-2 flex-wrap justify-center mb-2">';
+
+            const tmpl = this.mode === 'silabas' ? null : this.current.template;
+
+            if (this.mode === 'silabas') {
+                this.placed.forEach((p, i) => {
+                    h += '<div class="drop-zone' + (p ? ' filled' : '') +
+                        '" data-zone="' + i + '" style="min-width:50px;min-height:48px">' + (p || '') + '</div>';
+                });
+            } else if (tmpl) {
+                let vi = 0;
+                for (let i = 0; i < tmpl.length; i++) {
+                    if (tmpl[i] === '_') {
+                        h += '<div class="drop-zone' + (this.placed[vi] ? ' filled' : '') +
+                            '" data-zone="' + vi + '" style="min-width:40px;min-height:48px;font-size:1.2rem">' +
+                            (this.placed[vi] || '') + '</div>';
+                        vi++;
+                    } else {
+                        h += '<span class="text-3xl font-black px-1">' + tmpl[i] + '</span>';
+                    }
+                }
+            }
+            h += '</div></div><div class="flex gap-2 flex-wrap justify-center" id="piecePool">';
+            this.pool.forEach((p, i) => {
+                const used = this.usedMap[p] || 0;
+                const total = this.pool.filter(x => x === p).length;
+                const isUsed = used >= total;
+                h += '<div class="syllable-piece' + (isUsed ? ' placed' : '') +
+                    '" data-piece="' + i + '" ' + (isUsed ? '' : 'draggable="true"') + '>' + p + '</div>';
+            });
+            h += '</div>';
+            area.innerHTML = h;
+            this._bindPieces();
+            this._bindZones();
+        } else {
+            let h = '<div class="card p-6 mb-4"><p class="text-xl font-bold mb-4">' +
+                (this.current.pergunta || '') + '</p>' +
+                '<div class="flex gap-2 flex-wrap justify-center" id="piecePool">';
+            this.pool.forEach((p, i) => {
+                h += '<div class="syllable-piece" data-piece="' + i + '">' + p + '</div>';
+            });
+            h += '</div></div>';
+            area.innerHTML = h;
+            area.querySelectorAll('[data-piece]').forEach(el => {
+                el.addEventListener('click', () => this.selectOption(parseInt(el.dataset.piece)));
+            });
+        }
+    },
+
+    _bindPieces() {
+        document.querySelectorAll('#piecePool [data-piece]').forEach(el => {
+            const idx = parseInt(el.dataset.piece);
+            if (el.classList.contains('placed')) return;
+            el.addEventListener('pointerdown', e => this._startDrag(e, idx));
+            el.addEventListener('click', () => this._clickPiece(idx));
+        });
+    },
+
+    _bindZones() {
+        document.querySelectorAll('.drop-zone[data-zone]').forEach(el => {
+            const zi = parseInt(el.dataset.zone);
+            el.addEventListener('pointerup', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (this.dragIdx !== null) this._dropInZone(zi);
+            });
+            el.addEventListener('click', e => {
+                e.stopPropagation();
+                if (this.dragIdx !== null) return;
+                this.clickZone(zi);
+            });
+        });
+    },
+
+    _clickPiece(i) {
+        playSound('click');
+        this.selectedPiece = i;
+        this.render();
+    },
+
+    _startDrag(e, i) {
+        e.preventDefault();
+        const p = this.pool[i];
+        const used = this.usedMap[p] || 0;
+        const total = this.pool.filter(x => x === p).length;
+        if (used >= total) return;
+
+        this.dragIdx = i;
+        this.selectedPiece = null;
+        const el = e.target;
+        el.classList.add('dragging');
+
+        this.ghostEl = document.createElement('div');
+        this.ghostEl.className = 'drag-ghost';
+        this.ghostEl.textContent = p;
+        document.body.appendChild(this.ghostEl);
+        this._moveGhost(e);
+
+        this._onMove = ev => this._moveGhost(ev);
+        this._onUp = ev => { ev.preventDefault(); this._endDrag(ev); };
+        document.addEventListener('pointermove', this._onMove);
+        document.addEventListener('pointerup', this._onUp);
+    },
+
+    _moveGhost(e) {
+        if (this.ghostEl) {
+            this.ghostEl.style.left = e.clientX + 'px';
+            this.ghostEl.style.top = e.clientY + 'px';
+        }
+        document.querySelectorAll('.drop-zone[data-zone]').forEach(z => {
+            const r = z.getBoundingClientRect();
+            const over = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+            z.classList.toggle('drag-over', over);
+        });
+    },
+
+    _endDrag(e) {
+        const el = document.querySelector('[data-piece="' + this.dragIdx + '"]');
+        if (el) el.classList.remove('dragging');
+        let dropped = false;
+
+        document.querySelectorAll('.drop-zone[data-zone]').forEach(z => {
+            const r = z.getBoundingClientRect();
+            if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+                this._dropInZone(parseInt(z.dataset.zone));
+                dropped = true;
+                z.classList.remove('drag-over');
+            }
+        });
+
+        if (!dropped) document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
+        this.cleanup();
+        if (!dropped) this.dragIdx = null;
+        else this.render();
+    },
+
+    _dropInZone(zi) {
+        if (this.dragIdx === null) return;
+        if (!this.placed || zi >= this.placed.length) return;
+
+        const p = this.pool[this.dragIdx];
+        if (this.placed[zi] !== null) {
+            this.usedMap[this.placed[zi]] = (this.usedMap[this.placed[zi]] || 0) - 1;
+        }
+        this.placed[zi] = p;
+        this.usedMap[p] = (this.usedMap[p] || 0) + 1;
+        this.dragIdx = null;
+
+        if (!this.placed.includes(null)) setTimeout(() => this.checkAnswer(), 300);
+    },
+
+    clickZone(z) {
+        if (!this.placed || z >= this.placed.length) return;
+
+        if (this.selectedPiece === null) {
+            if (this.placed[z] !== null) {
+                this.usedMap[this.placed[z]] = (this.usedMap[this.placed[z]] || 0) - 1;
+                this.placed[z] = null;
+                this.render();
+            }
+            return;
+        }
+
+        const p = this.pool[this.selectedPiece];
+        if (this.placed[z] !== null) {
+            this.usedMap[this.placed[z]] = (this.usedMap[this.placed[z]] || 0) - 1;
+        }
+        this.placed[z] = p;
+        this.usedMap[p] = (this.usedMap[p] || 0) + 1;
+        this.selectedPiece = null;
+        this.render();
+
+        if (!this.placed.includes(null)) setTimeout(() => this.checkAnswer(), 300);
+    },
+
+    selectOption(i) {
+        if (!this.current) return;
+        const chosen = this.pool[i];
+        const correct = this.current.answer;
+
+        if (chosen === correct) {
+            playSound('correct');
+            addStreak();
+            state.arrasta++;
+            saveState();
+            const fb = document.getElementById('arrastaFeedback');
+            fb.innerHTML = '<div class="hint-box" style="border-left-color:var(--success);background:rgba(6,214,160,.1)">' +
+                '<i class="fas fa-check-circle" style="color:var(--success)"></i> <strong>Correto!</strong> ' +
+                (this.current.word || this.current.tipo || '') + '</div>';
+            showXPFloat(10, 200, 200);
+            setTimeout(() => this.next(), 1500);
+        } else {
+            playSound('wrong');
+            resetStreak();
+            const fb = document.getElementById('arrastaFeedback');
+            fb.innerHTML = '<div class="hint-box" style="border-left-color:var(--error);background:rgba(239,71,111,.1)">' +
+                '<i class="fas fa-times-circle" style="color:var(--error)"></i> <strong>Quase!</strong> A resposta era: <b>' +
+                correct + '</b></div>';
+            this.selectedPiece = null;
+            this.render();
+        }
+    },
+
+    checkAnswer() {
+        if (!this.current || !this.placed) return;
+
+        let ok = true;
+        /* Para silabas usa syl, para vogais/consoantes usa answer (ambos array) */
+        let ref;
+        if (this.mode === 'silabas') {
+            ref = Array.isArray(this.current.syl) ? this.current.syl :
+                  (typeof this.current.syl === 'string' ? this.current.syl.split('') : []);
+        } else {
+            ref = Array.isArray(this.current.answer) ? this.current.answer :
+                  (typeof this.current.answer === 'string' ? this.current.answer.split('') : []);
+        }
+
+        this.placed.forEach((p, i) => {
+            if (p !== ref[i]) ok = false;
+        });
+
+        if (ok) {
+            playSound('correct');
+            addStreak();
+            state.arrasta++;
+            saveState();
+            const fb = document.getElementById('arrastaFeedback');
+            fb.innerHTML = '<div class="hint-box" style="border-left-color:var(--success);background:rgba(6,214,160,.1)">' +
+                '<i class="fas fa-check-circle" style="color:var(--success)"></i> <strong>Correto!</strong> A palavra e: ' +
+                (this.current.word || '') + '</div>';
+            showXPFloat(10, 200, 200);
+            setTimeout(() => this.next(), 1200);
+        } else {
+            playSound('wrong');
+            resetStreak();
+            const fb = document.getElementById('arrastaFeedback');
+            fb.innerHTML = '<div class="hint-box" style="border-left-color:var(--error);background:rgba(239,71,111,.1)">' +
+                '<i class="fas fa-times-circle" style="color:var(--error)"></i> <strong>Quase!</strong> A palavra era: <b>' +
+                (this.current.word || '') + '</b></div>';
+            this.placed = this.placed.map(() => null);
+            this.usedMap = {};
+            this.render();
+        }
+    }
+};
+
+/* ===== FRUTAS EM INGLES ===== */
+const fruits=[{emoji:'🍎',name:'apple'},{emoji:'🍌',name:'banana'},{emoji:'🍊',name:'orange'},{emoji:'🍇',name:'grape'},{emoji:'🍓',name:'strawberry'},{emoji:'🍉',name:'watermelon'},{emoji:'🥭',name:'mango'},{emoji:'🍍',name:'pineapple'},{emoji:'🍋',name:'lemon'},{emoji:'🍑',name:'peach'},{emoji:'🍒',name:'cherry'},{emoji:'🥝',name:'kiwi'},{emoji:'🍐',name:'pear'},{emoji:'🫐',name:'blueberry'},{emoji:'🥥',name:'coconut'},{emoji:'🍈',name:'melon'},{emoji:'🍅',name:'tomato'},{emoji:'🥑',name:'avocado'},{emoji:'🌶️',name:'pepper'},{emoji:'🥕',name:'carrot'}];
+const Frutas={current:null,correct:0,total:0,hintLevel:0,
+next(){this.current=fruits[Math.floor(Math.random()*fruits.length)];this.hintLevel=0;document.getElementById('fruitEmoji').textContent=this.current.emoji;document.getElementById('fruitInput').value='';document.getElementById('fruitHint').textContent=this.current.name.length+' letras';document.getElementById('fruitScore').textContent=this.correct+'/'+this.total;document.getElementById('fruitInput').focus()},
+hint(){this.hintLevel++;const n=this.current.name;if(this.hintLevel===1)document.getElementById('fruitHint').textContent='Comeca com "'+n[0].toUpperCase()+'" — '+n.length+' letras';else if(this.hintLevel===2)document.getElementById('fruitHint').textContent=n[0]+'_'.repeat(n.length-2)+n[n.length-1];else document.getElementById('fruitHint').textContent=n},
+check(){const inp=document.getElementById('fruitInput'),v=inp.value.trim().toLowerCase();if(!v){inp.classList.add('shake');setTimeout(()=>inp.classList.remove('shake'),400);return}this.total++;if(v===this.current.name){this.correct++;addStreak();playSound('correct');const r=inp.getBoundingClientRect();showXPFloat(this.hintLevel===0?15:8,r.left,r.top-20);showToast('Correto! '+this.current.emoji+' = '+this.current.name,'success')}else{resetStreak();playSound('wrong');showToast('Resposta: '+this.current.name,'error');inp.classList.add('shake');setTimeout(()=>inp.classList.remove('shake'),400)}state.frutas=this.correct;saveState();setTimeout(()=>this.next(),1200)}};
+document.getElementById('fruitInput').addEventListener('keydown',e=>{if(e.key==='Enter')Frutas.check()});
+
+/* ===== NUMEROS EM IDIOMAS ===== */
+function numEN(n){const o=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'],t=['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];if(n<20)return o[n];if(n===100)return 'one hundred';const a=Math.floor(n/10),b=n%10;return b===0?t[a]:t[a]+'-'+o[b]}
+function numES(n){const o=['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve'],t=['diez','once','doce','trece','catorce','quince','dieciseis','diecisiete','dieciocho','diecinueve'],d=['','','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'],v=['','veintiuno','veintidos','veintitres','veinticuatro','veinticinco','veintiseis','veintisiete','veintiocho','veintinueve'];if(n<10)return o[n];if(n<20)return t[n-10];if(n===100)return 'cien';const a=Math.floor(n/10),b=n%10;if(a===2)return b===0?'veinte':v[b];return b===0?d[a]:d[a]+' y '+o[b]}
+const Numeros={lang:'en',correct:0,total:0,
+setLang(l,b){this.lang=l;b.parentElement.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');this.next()},
+next(){const n=Math.floor(Math.random()*101),cw=this.lang==='en'?numEN(n):numES(n),opts=[cw];while(opts.length<4){let r=Math.floor(Math.random()*101);if(r===n)continue;const w=this.lang==='en'?numEN(r):numES(r);if(!opts.includes(w))opts.push(w)}for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]]}document.getElementById('numDisplay').textContent=n;document.getElementById('numLangLabel').textContent=this.lang==='en'?'Escolha em Ingles':'Escolha em Espanhol';document.getElementById('numScore').textContent=this.correct+'/'+this.total;const g=document.getElementById('numOptions');g.innerHTML='';opts.forEach(o=>{const b=document.createElement('button');b.className='option-btn';b.textContent=o;b.onclick=()=>this.answer(o,cw,b);g.appendChild(b)})},
+answer(chosen,correct,btn){this.total++;const ok=chosen===correct;document.querySelectorAll('#numOptions .option-btn').forEach(b=>{b.disabled=true;if(b.textContent===correct)b.classList.add('correct');if(b===btn&&!ok)b.classList.add('wrong')});if(ok){this.correct++;addStreak();playSound('correct');const r=btn.getBoundingClientRect();showXPFloat(10,r.left,r.top-20)}else{resetStreak();playSound('wrong')}state.numeros=this.correct;saveState();setTimeout(()=>this.next(),1200)}};
+
+/* ===== ORTOGRAFIA ===== */
+const ortografiaData={
+ss:{label:'SS',info:'<b>Usa-se SS</b> entre duas vogais com som /s/ forte. Depois de ditongos (passear). Depois de consoantes nasais (assar).<br><b>Exemplos:</b> paSSar, piSSina, miSSão, paSSeio, griSSalho, aSSento, baSSo, teSSeira.',questions:[qp('Complete: PA___AR','S','SS','C','Ç',1),qp('Complete: PI___INA','S','SS','C','Z',1),qp('Complete: MI___ÃO','S','SS','C','Ç',1),qp('Complete: A__ENTO','S','SS','C','Z',1),qp('Complete: CA__AR (cozinhar)','S','SS','C','Q',1),qp('Complete: PI__AR (andar na agua)','S','SS','C','Ç',1),qp('Complete: A__USTAR','S','SS','C','Z',1),qp('Complete: GRI__ALHO','S','SS','CH','C',1),qp('Complete: MA__A (pasta)','S','SS','M','N',1),qp('Complete: BA__O (grave)','S','SS','Z','C',1),qp('Complete: TE__EIRA','S','SS','C','Z',1),qp('Complete: A__OBIO','S','SS','C','Ç',1),qp('Complete: PA__EIO','S','SS','Z','C',1),qp('Complete: FO__E (imperfeito de ser)','S','SS','C','Z',1),qp('Complete: GI__E (cor cinza)','S','SS','CH','C',1)]},
+s:{label:'S',info:'<b>Usa-se S</b> no inicio, entre vogal e consoante, depois de ditongos (pousar), no fim de palavras derivadas do latim.<br><b>Exemplos:</b> Sala, Sol, Esperar, Asma, Mesa, Pais, Vez, Lapis, Onibus, Gas.',questions:[qp('Complete: E_PERAR','S','SS','C','Z',0),qp('Complete: A_MA','S','SS','M','N',0),qp('Complete: ME_A','S','SS','Z','C',0),qp('Complete: _ALA','S','C','Z','SS',0),qp('Complete: _OL','S','C','Z','SS',0),qp('Complete: _APO','S','C','Z','SS',0),qp('Complete: LA_IS','S','SS','Z','C',0),qp('Complete: ONI_US','S','SS','Z','C',0),qp('Complete: _ER','S','C','Z','SS',0),qp('Complete: GA_','S','Z','C','SS',0),qp('Complete: NA_ÃO (submerge)','S','Z','C','SS',0),qp('Complete: CU_SO','S','SS','Z','C',0),qp('Complete: PA_SAR (caminhar)','S','SS','C','Z',0),qp('Complete: TE_O (mesmo que mas)','S','SS','Z','C',0),qp('Complete: U_A (sabor de limão)','S','SS','Z','Ç',0)]},
+c:{label:'C',info:'<b>Usa-se C</b> antes de E e I com som de /k/: cedo, cidade, cerveja, cinco, cinto.<br><b>Exemplos:</b> Cedo, Cidade, Cervo, Cinco, Cinto, Cebola, Cereja, Ciclo, Civil, Cirurgia, Cobre, Coragem, Custo.',questions:[qp('Complete: _EDO','S','C','Ç','SS',1),qp('Complete: _IDADE','S','C','Ç','SS',1),qp('Complete: _INCO','S','C','Ç','SS',1),qp('Complete: _INTO','S','C','Ç','SS',1),qp('Complete: _EBOLA','S','C','Ç','SS',1),qp('Complete: _ERJA (fruta)','S','C','Ç','SS',1),qp('Complete: _ICLO','S','C','Ç','SS',1),qp('Complete: _IVIL','S','C','Ç','SS',1),qp('Complete: _IRURGIA','S','C','Ç','SS',1),qp('Complete: _OBRE','S','C','Ç','SS',1),qp('Complete: _OCEIRA','S','C','Ç','SS',1),qp('Complete: _ORAGEM','S','C','Ç','SS',1),qp('Complete: _ULTURA','S','C','Ç','SS',1),qp('Complete: _USTO','S','C','Ç','SS',1),qp('Complete: _ENOURA','S','C','Ç','SS',1)]},
+cCedilha:{label:'Ç',info:'<b>Usa-se Ç</b> antes de A, O, U. Transforma /k/ em /s/. Nunca antes de E ou I (nesse caso usa-se C).<br><b>Exemplos:</b> Caça, Braço, Moça, Aço, Coração, Lança, Preço, Poço, Almoço, Louça, Maçã, Paçoca.',questions:[qp('Complete: CA_A','S','C','Ç','SS',2),qp('Complete: BRA_O','S','C','Ç','SS',2),qp('Complete: MO_A','S','C','Ç','SS',2),qp('Complete: A_O (metal)','S','C','Ç','SS',2),qp('Complete: CORA_ÃO','S','C','Ç','SS',2),qp('Complete: LAN_A','S','C','Ç','SS',2),qp('Complete: PRE_O','S','C','Ç','SS',2),qp('Complete: PO_O (buraco)','S','C','Ç','SS',2),qp('Complete: ALMO_O','S','C','Ç','SS',2),qp('Complete: PES_O_O','S','C','Ç/Ç','SS',2),qp('Complete: LOU_A (prato)','S','C','Ç','SS',2),qp('Complete: MA_Ã (fruta)','S','C','Ç','SS',2),qp('Complete: FOI_E (ferramenta)','S','C','Ç','SS',2),qp('Complete: BU_O (estomago)','S','C','Ç','SS',2),qp('Complete: PA_OCA (doce)','S','C','Ç','SS',2)]},
+r:{label:'R',info:'<b>Usa-se R simples</b> no inicio de palavras, entre vogal e consoante, no final. Som suave (uma batida).<br><b>Exemplos:</b> Rato, Rosa, Rio, Carta, Porta, Arma, Amor, Dor, Cantar, Falar, Morte, Cor, Mar, Flor.',questions:[qp('Complete: _ATO','R','RR','S','C',0),qp('Complete: _OSA','R','RR','S','C',0),qp('Complete: _IO','R','RR','S','C',0),qp('Complete: CA_TA','R','RR','S','C',0),qp('Complete: PO_TA','R','RR','S','C',0),qp('Complete: A_MA','R','RR','S','C',0),qp('Complete: AMO_','R','RR','S','C',0),qp('Complete: DO_','R','RR','S','C',0),qp('Complete: CA_TA_ (carta)','R','RR','S','C',0),qp('Complete: FA_AR','R','RR','S','C',0),qp('Complete: MO_TE','R','RR','S','C',0),qp('Complete: _UA','R','RR','S','C',0),qp('Complete: MA_ (mar)','R','RR','S','C',0),qp('Complete: FLO_','R','RR','S','C',0),qp('Complete: CO_ (cor)','R','RR','S','C',0)]},
+rr:{label:'RR',info:'<b>Usa-se RR</b> entre duas vogais com som forte (duas batidas). Nunca no inicio.<br><b>Exemplos:</b> Carro, Burro, Ferro, Correio, Cachorro, Barriga, Arroz, Morro, Barreira, Correr, Serra, Terra, Guerra.',questions:[qp('Complete: CA_O','R','RR','S','C',1),qp('Complete: BU_O','R','RR','S','C',1),qp('Complete: FE_O','R','RR','S','C',1),qp('Complete: CO_EIO','R','RR','S','C',1),qp('Complete: BARRI_A','G','R','RR','S',1),qp('Complete: A_IZ','R','RR','S','C',1),qp('Complete: MO_O','R','RR','S','C',1),qp('Complete: BA_EIRA','R','RR','S','C',1),qp('Complete: TE_A','R','RR','S','C',1),qp('Complete: SE_A','R','RR','S','C',1),qp('Complete: TE_A (terra)','R','RR','S','C',1),qp('Complete: GUE_A','R','RR','S','C',1),qp('Complete: CA_EIRA','R','RR','S','C',1),qp('Complete: BU_ACO','R','RR','S','C',1),qp('Complete: CA_HO_O','R/RR','R/R','RR/R','RR/RR',2)]},
+sc:{label:'SC',info:'<b>Usa-se SC</b> em palavras derivadas do latim. O som e /s/.<br><b>Exemplos:</b> Nascer, Crescer, Descer, Piscar, Fascinar, Ascender, Esconder, Disciplina, Adolescente, Miscigenação, Suscetível.',questions:[qp('Complete: NA_ER','SC','S','C','Ç',0),qp('Complete: CRE_ER','SC','S','C','Ç',0),qp('Complete: DE_ER','SC','S','C','Ç',0),qp('Complete: PI_AR','SC','S','C','Ç',0),qp('Complete: FA_INAR','SC','S','C','Ç',0),qp('Complete: A_DOLESCENTE','SC','S','C','Z',0),qp('Complete: DI_IPLINA','SC','S','C','Ç',0),qp('Complete: MI_IGENAÇÃO','SC','S','C','Ç',0),qp('Complete: SU_ETÍVEL','SC','S','C','Ç',0),qp('Complete: RE_USICITAR','SC','S','C','Ç',0),qp('Complete: A_ENDER','SC','S','C','Ç',0),qp('Complete: E_CONDER','SC','S','C','Ç',0),qp('Complete: FA_ÍCULO','SC','S','C','Ç',0),qp('Complete: A_CRESCER','SC','S','C','Ç',0),qp('Complete: DE_CRESCER','SC','S','C','Ç',0)]},
+m:{label:'M',info:'<b>Usa-se M</b> antes de P e B (consoantes labiais). Regra mais simples!<br><b>Exemplos:</b> Campo, Combate, Comprar, Comer, Cambio, Camisa, Comigo, Pomba, Bomba, Lombo, Ombro, Embaixo, Importar, Emprestar.',questions:[qp('Complete: CA_PO','M','N','P','B',0),qp('Complete: CO_BATE','M','N','C','D',0),qp('Complete: CO_PRAR','M','N','P','B',0),qp('Complete: CA_ISA','M','N','S','Z',0),qp('Complete: CO_IGO','M','N','G','J',0),qp('Complete: PO_BA','M','N','P','B',0),qp('Complete: BO_BA','M','N','P','B',0),qp('Complete: LO_BO','M','N','P','B',0),qp('Complete: O_BRO','M','N','P','B',0),qp('Complete: E_BAIXO','M','N','P','B',0),qp('Complete: I_PORTAR','M','N','P','B',0),qp('Complete: E_PRESTAR','M','N','P','B',0),qp('Complete: I_POSSÍVEL','M','N','P','B',0),qp('Complete: CA_BIO','M','N','P','B',0),qp('Complete: TO_BADOR','M','N','P','B',0)]},
+n:{label:'N',info:'<b>Usa-se N</b> antes de qualquer consoante que NAO seja P ou B (essas usam M). Antes de vogais tambem.<br><b>Exemplos:</b> Ponto, Cantar, Nuvem, Vento, Tinto, Unha, Ganho, Sonho, Dança, Banho, Cinza, Caneta, Encontro, Mundo, Venda.',questions:[qp('Complete: PO_TO','M','N','P','B',1),qp('Complete: CA_TAR','M','N','T','D',1),qp('Complete: _UVEM','M','N','L','R',1),qp('Complete: VE_TO','M','N','D','T',1),qp('Complete: TI_TO','M','N','D','T',1),qp('Complete: _UNHA','M','N','L','R',1),qp('Complete: GA_HO','M','N','N','NH',1),qp('Complete: SO_HO','M','N','N','NH',1),qp('Complete: DA_ÇA','M','N','N','NH',1),qp('Complete: BA_HO','M','N','N','NH',1),qp('Complete: CI_ZA','M','N','S','Z',1),qp('Complete: CA_ETA','M','N','T','D',1),qp('Complete: E_CONTRO','M','N','N','NH',1),qp('Complete: JA_EIRO','M','N','N','NH',1),qp('Complete: MU_DO','M','N','D','T',1)]}
+};
+
+/* ===== ORTOGRAFIA - JOGO (PRESERVANDO pergunta ao embaralhar) ===== */
+const Ortografia={topic:null,questions:[],qIdx:0,correct:0,
+init(){const tabs=document.getElementById('ortografiaTabs');tabs.innerHTML='';Object.keys(ortografiaData).forEach(k=>{const b=document.createElement('button');b.className='tab-btn'+(k===this.topic?' active':'');b.textContent=ortografiaData[k].label;b.onclick=()=>this.setTopic(k,b);tabs.appendChild(b)});if(!this.topic)this.topic='ss';this.setTopic('ss',tabs.querySelector('.tab-btn'))},
+setTopic(t,b){this.topic=t;b.parentElement.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('ortografiaInfo').innerHTML=ortografiaData[t].info;this.questions=ortografiaData[t].questions.map(q=>{const sh=shuffleOpts(q.o,q.a);return{q:q.q,o:sh.o,a:sh.a}});for(let i=this.questions.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[this.questions[i],this.questions[j]]=[this.questions[j],this.questions[i]]}this.qIdx=0;this.correct=0;this.renderQ()},
+renderQ(){if(this.qIdx>=this.questions.length){this.finish();return}const q=this.questions[this.qIdx];const g=document.getElementById('ortografiaPlayArea');g.innerHTML='<div class="card p-6"><p class="text-xl font-bold mb-4">'+q.q+'</p><div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="ortOptions"></div></div>';const og=document.getElementById('ortOptions');q.o.forEach((o,i)=>{const b=document.createElement('button');b.className='option-btn';b.textContent=o;b.onclick=()=>this.answer(i,b);og.appendChild(b)})},
+answer(i,b){const q=this.questions[this.qIdx],ok=i===q.a;document.querySelectorAll('#ortOptions .option-btn').forEach((x,j)=>{x.disabled=true;if(j===q.a)x.classList.add('correct');if(j===i&&!ok)x.classList.add('wrong')});if(ok){this.correct++;addStreak();playSound('correct');const r=b.getBoundingClientRect();showXPFloat(10,r.left,r.top-20)}else{resetStreak();playSound('wrong')}setTimeout(()=>{this.qIdx++;this.renderQ()},800)},
+finish(){state.ortografia=(state.ortografia||0)+this.correct;saveState();const self=this;showResult(this.correct,this.questions.length,()=>{self.questions=ortografiaData[self.topic].questions.map(q=>{const sh=shuffleOpts(q.o,q.a);return{q:q.q,o:sh.o,a:sh.a}});for(let i=self.questions.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[self.questions[i],self.questions[j]]=[self.questions[j],self.questions[i]]};self.qIdx=0;self.correct=0;self.renderQ()},null)},
+next(){this.setTopic(this.topic,document.querySelector('#ortografiaTabs .tab-btn.active'))}
+};
+
+/* ===== PORQUE / POR QUE / PORQUÊ / POR QUÊ ===== */
+const porqueRules=[
+'<b>POR QUE</b> (separado, sem acento): Inicio de frases interrogativas.<br><b>Ex:</b> <i>Por que voce chegou tarde?</i> Tambem equivale a "pelo qual".<br><b>Ex:</b> <i>Essa e a razao por que choro.</i>',
+'<b>PORQUE</b> (junto, sem acento): Explicacao, causa (=pois, visto que).<br><b>Ex:</b> <i>Eu estudo porque quero passar.</i>',
+'<b>POR QUÊ</b> (separado, com acento): Final de frases interrogativas.<br><b>Ex:</b> <i>Voce veio por quê?</i>',
+'<b>PORQUÊ</b> (junto, com acento): Substantivo (o porquê = motivo).<br><b>Ex:</b> <i>Qual e o porquê da sua tristeza?</i>'
+];
+const porqueQuestions=[
+{q:'"___ voce nao veio?"',options:['Por que','Porque','Por quê','Porquê'],answer:0},{q:'"Eu nao fui ___ estava doente."',options:['Por que','Porque','Por quê','Porquê'],answer:1},
+{q:'"Voce esta triste por ___?"',options:['Por que','Porque','Por quê','Porquê'],answer:2},{q:'"Nao entendi o ___ da sua raiva."',options:['Por que','Porque','Por quê','Porquê'],answer:3},
+{q:'"___ choveu muito hoje?"',options:['Por que','Porque','Por quê','Porquê'],answer:0},{q:'"Ela sorriu ___ estava feliz."',options:['Por que','Porque','Por quê','Porquê'],answer:1},
+{q:'"Essa e a razao ___ ele chorou."',options:['Por que','Porque','Por quê','Porquê'],answer:0},{q:'"Qual e o ___ de tanto barulho?"',options:['Por que','Porque','Por quê','Porquê'],answer:3},
+{q:'"___ a prova foi adiada?"',options:['Por que','Porque','Por quê','Porquê'],answer:0},{q:'"Estudei bastante ___ queria passar."',options:['Por que','Porque','Por quê','Porquê'],answer:1},
+{q:'"Voce gritou, mas ___?"',options:['Por que','Porque','Por quê','Porquê'],answer:2},{q:'"Existem varios ___ para isso."',options:['Por que','Porque','Por quês','Porquês'],answer:3},
+{q:'"___ o ceu e azul?"',options:['Por que','Porque','Por quê','Porquê'],answer:0},{q:'"Nao saí ___ estava chovendo."',options:['Por que','Porque','Por quê','Porquê'],answer:1},
+{q:'"Me explique o ___ dessa confusao."',options:['Por que','Porque','Por quê','Porquê'],answer:3},{q:'"___ voce mentiu para mim?"',options:['Por que','Porque','Por quê','Porquê'],answer:0},
+{q:'"Ele falhou ___ nao estudou."',options:['Por que','Porque','Por quê','Porquê'],answer:1},{q:'"Voce foi embora e eu nao sei ___."',options:['por que','porque','por quê','porquê'],answer:2},
+{q:'"Todo problema tem um ___."',options:['Por que','Porque','Por quê','Porquê'],answer:3},{q:'"___ nao me avisaram?"',options:['Por que','Porque','Por quê','Porquê'],answer:0},
+{q:'"Comi muito ___ estava com fome."',options:['Por que','Porque','Por quê','Porquê'],answer:1},{q:'"Voce brigou comigo, mas ___?"',options:['Por que','Porque','Por quê','Porquê'],answer:2},
+{q:'"Nao descobri o ___ do atraso."',options:['Por que','Porque','Por quê','Porquê'],answer:3},{q:'"___ o preco subiu tanto?"',options:['Por que','Porque','Por quê','Porquê'],answer:0},
+{q:'"Aceitei a proposta ___ era vantajosa."',options:['Por que','Porque','Por quê','Porquê'],answer:1},{q:'"Ficou nervoso e nao sei ___."',options:['por que','porque','por quê','porquê'],answer:2},
+{q:'"Cada um tem seu ___ para agir assim."',options:['Por que','Porque','Por quê','Porquês'],answer:3},{q:'"___ voce nao gosta de chocolate?"',options:['Por que','Porque','Por quê','Porquê'],answer:0},
+{q:'"Saí cedo ___ queria evitar o transito."',options:['Por que','Porque','Por quê','Porquê'],answer:1},{q:'"Chorou muito, e eu perguntei por ___."',options:['que','que','quê','quê'],answer:2},
+{q:'"O professor perguntou ___ eu nao fiz a tarefa."',options:['por que','porque','por quê','porquê'],answer:0},{q:'"Ela pediu desculpas ___ errou."',options:['Por que','Porque','Por quê','Porquê'],answer:1},
+{q:'"Ninguem me disse o ___ da reuniao."',options:['Por que','Porque','Por quê','Porquê'],answer:3},{q:'"___ a Terra e redonda?"',options:['Por que','Porque','Por quê','Porquê'],answer:0},
+{q:'"Nao vou viajar ___ tenho muito trabalho."',options:['Por que','Porque','Por quê','Porquê'],answer:1},{q:'"Voce me trocou por ___?"',options:['Por que','Porque','Por quê','Porquê'],answer:2},
+{q:'"Precisamos entender o ___ de tudo isso."',options:['Por que','Porque','Por quê','Porquê'],answer:3},{q:'"___ os animais migram?"',options:['Por que','Porque','Por quê','Porquê'],answer:0},
+{q:'"O time venceu ___ jogou bem."',options:['Por que','Porque','Por quê','Porquê'],answer:1},{q:'"Ele se desculpou, mas eu nao aceitei por ___."',options:['que','que','quê','quê'],answer:2},
+{q:'"E o ___ de tanto segredo?"',options:['Por que','Porque','Por quê','Porquê'],answer:3},{q:'"___ voce escolheu este curso?"',options:['Por que','Porque','Por quê','Porquê'],answer:0}
+];
+/* ===== PORQUE - JOGO (PRESERVANDO pergunta) ===== */
+const Porque={questions:[],qIdx:0,correct:0,
+init(){document.getElementById('porqueInfoBox').innerHTML=porqueRules.join('<hr style="margin:10px 0;border-color:var(--border)">');this.questions=porqueQuestions.map(q=>{const sh=shuffleOpts(q.options,q.answer);return{q:q.q,o:sh.o,a:sh.a}});for(let i=this.questions.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[this.questions[i],this.questions[j]]=[this.questions[j],this.questions[i]]}this.qIdx=0;this.correct=0;this.renderQ()},
+renderQ(){if(this.qIdx>=this.questions.length){this.finish();return}const q=this.questions[this.qIdx];const g=document.getElementById('porquePlayArea');g.innerHTML='<div class="card p-6"><p class="text-xl font-bold mb-4">Complete: '+q.q+'</p><div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="pqOptions"></div></div>';const og=document.getElementById('pqOptions');q.o.forEach((o,i)=>{const b=document.createElement('button');b.className='option-btn';b.textContent=o;b.onclick=()=>this.answer(i,b);og.appendChild(b)})},
+answer(i,b){const q=this.questions[this.qIdx],ok=i===q.a;document.querySelectorAll('#pqOptions .option-btn').forEach((x,j)=>{x.disabled=true;if(j===q.a)x.classList.add('correct');if(j===i&&!ok)x.classList.add('wrong')});if(ok){this.correct++;addStreak();playSound('correct');const r=b.getBoundingClientRect();showXPFloat(10,r.left,r.top-20)}else{resetStreak();playSound('wrong')}setTimeout(()=>{this.qIdx++;this.renderQ()},800)},
+finish(){state.porque=(state.porque||0)+this.correct;saveState();const self=this;showResult(this.correct,this.questions.length,()=>{self.questions=porqueQuestions.map(q=>{const sh=shuffleOpts(q.options,q.answer);return{q:q.q,o:sh.o,a:sh.a}});for(let i=self.questions.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[self.questions[i],self.questions[j]]=[self.questions[j],self.questions[i]]};self.qIdx=0;self.correct=0;self.renderQ()},null)},
+next(){this.init()}
+};
+
+/* ===== ALFABETOS EM IDIOMAS ===== */
+const idiomasData={
+japones:{label:'Japones (Hiragana)',info:'<strong>Hiragana:</strong> Um dos tres sistemas de escrita japonesa. Cada simbolo representa uma silaba. Ha 46 simbolos basicos.',items:[
+{sym:'あ',name:'a',pergunta:'Qual o romaji de あ?',pool:['a','i','u','e'],answer:'a'},{sym:'い',name:'i',pergunta:'Qual o romaji de い?',pool:['a','i','u','o'],answer:'i'},
+{sym:'う',name:'u',pergunta:'Qual o romaji de う?',pool:['a','i','u','o'],answer:'u'},{sym:'え',name:'e',pergunta:'Qual o romaji de え?',pool:['a','i','u','e'],answer:'e'},
+{sym:'お',name:'o',pergunta:'Qual o romaji de お?',pool:['a','u','o','e'],answer:'o'},{sym:'か',name:'ka',pergunta:'Qual o romaji de か?',pool:['ka','ki','ku','ke'],answer:'ka'},
+{sym:'き',name:'ki',pergunta:'Qual o romaji de き?',pool:['ka','ki','ku','ke'],answer:'ki'},{sym:'く',name:'ku',pergunta:'Qual o romaji de く?',pool:['ka','ki','ku','ko'],answer:'ku'},
+{sym:'け',name:'ke',pergunta:'Qual o romaji de け?',pool:['ka','ki','ke','ko'],answer:'ke'},{sym:'こ',name:'ko',pergunta:'Qual o romaji de こ?',pool:['ka','ku','ke','ko'],answer:'ko'},
+{sym:'さ',name:'sa',pergunta:'Qual o romaji de さ?',pool:['sa','shi','su','se'],answer:'sa'},{sym:'し',name:'shi',pergunta:'Qual o romaji de し?',pool:['sa','shi','su','so'],answer:'shi'},
+{sym:'す',name:'su',pergunta:'Qual o romaji de す?',pool:['sa','shi','su','so'],answer:'su'},{sym:'せ',name:'se',pergunta:'Qual o romaji de せ?',pool:['sa','shi','se','so'],answer:'se'},
+{sym:'そ',name:'so',pergunta:'Qual o romaji de そ?',pool:['sa','su','se','so'],answer:'so'},{sym:'た',name:'ta',pergunta:'Qual o romaji de た?',pool:['ta','chi','tsu','te'],answer:'ta'},
+{sym:'ち',name:'chi',pergunta:'Qual o romaji de ち?',pool:['ta','chi','tsu','to'],answer:'chi'},{sym:'つ',name:'tsu',pergunta:'Qual o romaji de つ?',pool:['ta','chi','tsu','to'],answer:'tsu'},
+{sym:'て',name:'te',pergunta:'Qual o romaji de て?',pool:['ta','chi','te','to'],answer:'te'},{sym:'と',name:'to',pergunta:'Qual o romaji de と?',pool:['ta','tsu','te','to'],answer:'to'},
+{sym:'な',name:'na',pergunta:'Qual o romaji de な?',pool:['na','ni','nu','ne'],answer:'na'},{sym:'に',name:'ni',pergunta:'Qual o romaji de に?',pool:['na','ni','nu','no'],answer:'ni'},
+{sym:'ぬ',name:'nu',pergunta:'Qual o romaji de ぬ?',pool:['na','ni','nu','no'],answer:'nu'},{sym:'ね',name:'ne',pergunta:'Qual o romaji de ね?',pool:['na','ni','ne','no'],answer:'ne'},
+{sym:'の',name:'no',pergunta:'Qual o romaji de の?',pool:['na','nu','ne','no'],answer:'no'},{sym:'は',name:'ha',pergunta:'Qual o romaji de は?',pool:['ha','hi','fu','he'],answer:'ha'},
+{sym:'ひ',name:'hi',pergunta:'Qual o romaji de ひ?',pool:['ha','hi','fu','he'],answer:'hi'},{sym:'ふ',name:'fu',pergunta:'Qual o romaji de ふ?',pool:['ha','hi','fu','he'],answer:'fu'},
+{sym:'へ',name:'he',pergunta:'Qual o romaji de へ?',pool:['ha','hi','fu','he'],answer:'he'},{sym:'ほ',name:'ho',pergunta:'Qual o romaji de ほ?',pool:['ha','fu','he','ho'],answer:'ho'},
+{sym:'ま',name:'ma',pergunta:'Qual o romaji de ま?',pool:['ma','mi','mu','me'],answer:'ma'},{sym:'み',name:'mi',pergunta:'Qual o romaji de み?',pool:['ma','mi','mu','mo'],answer:'mi'},
+{sym:'む',name:'mu',pergunta:'Qual o romaji de む?',pool:['ma','mi','mu','mo'],answer:'mu'},{sym:'め',name:'me',pergunta:'Qual o romaji de め?',pool:['ma','mi','me','mo'],answer:'me'},
+{sym:'も',name:'mo',pergunta:'Qual o romaji de も?',pool:['ma','mu','me','mo'],answer:'mo'},{sym:'や',name:'ya',pergunta:'Qual o romaji de や?',pool:['ya','yu','yo','ra'],answer:'ya'},
+{sym:'ゆ',name:'yu',pergunta:'Qual o romaji de ゆ?',pool:['ya','yu','yo','ra'],answer:'yu'},{sym:'よ',name:'yo',pergunta:'Qual o romaji de よ?',pool:['ya','yu','yo','ra'],answer:'yo'},
+{sym:'ら',name:'ra',pergunta:'Qual o romaji de ら?',pool:['ra','ri','ru','re'],answer:'ra'},{sym:'り',name:'ri',pergunta:'Qual o romaji de り?',pool:['ra','ri','ru','ro'],answer:'ri'},
+{sym:'る',name:'ru',pergunta:'Qual o romaji de る?',pool:['ra','ri','ru','ro'],answer:'ru'},{sym:'れ',name:'re',pergunta:'Qual o romaji de れ?',pool:['ra','ri','re','ro'],answer:'re'},
+{sym:'ろ',name:'ro',pergunta:'Qual o romaji de ろ?',pool:['ra','ru','re','ro'],answer:'ro'},{sym:'わ',name:'wa',pergunta:'Qual o romaji de わ?',pool:['wa','wo','n','o'],answer:'wa'},
+{sym:'を',name:'wo',pergunta:'Qual o romaji de を?',pool:['wa','wo','o','a'],answer:'wo'},{sym:'ん',name:'n',pergunta:'Qual o romaji de ん?',pool:['na','ni','n','nu'],answer:'n'}
+]},
+frances:{label:'Frances',info:'<strong>Alfabeto Frances:</strong> Mesmas 26 letras com acentuacoes proprias: accent aigu (é), accent grave (è, à), accent circonflexe (ê, â, î, ô, û), tréma (ë, ï, ü) e cedille (ç).',items:[
+{sym:'é',name:'E com accent aigu',pergunta:'Como se chama o acento em "é"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Aigu'},{sym:'è',name:'E com accent grave',pergunta:'Como se chama o acento em "è"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Grave'},
+{sym:'ê',name:'E com circonflexe',pergunta:'Como se chama o acento em "ê"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Circonflexe'},{sym:'à',name:'A com accent grave',pergunta:'Como se chama o acento em "à"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Grave'},
+{sym:'â',name:'A com circonflexe',pergunta:'Como se chama o acento em "â"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Circonflexe'},{sym:'î',name:'I com circonflexe',pergunta:'Como se chama o acento em "î"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Circonflexe'},
+{sym:'ô',name:'O com circonflexe',pergunta:'Como se chama o acento em "ô"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Circonflexe'},{sym:'û',name:'U com circonflexe',pergunta:'Como se chama o acento em "û"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Circonflexe'},
+{sym:'ë',name:'E com tréma',pergunta:'Como se chama o acento em "ë"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Tréma'},{sym:'ï',name:'I com tréma',pergunta:'Como se chama o acento em "ï"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Tréma'},
+{sym:'ü',name:'U com tréma',pergunta:'Como se chama o acento em "ü"?',pool:['Aigu','Grave','Circonflexe','Tréma'],answer:'Tréma'},{sym:'ç',name:'C com cedille',pergunta:'Como se chama o simbolo em "ç"?',pool:['Cedille','Tréma','Grave','Aigu'],answer:'Cedille'},
+{sym:'Bonjour',name:'Ola / Bom dia',pergunta:'O que significa "Bonjour"?',pool:['Adeus','Obrigado','Ola/Bom dia','Boa noite'],answer:'Ola/Bom dia'},{sym:'Merci',name:'Obrigado',pergunta:'O que significa "Merci"?',pool:['Por favor','Obrigado','Desculpa','Adeus'],answer:'Obrigado'},
+{sym:'Au revoir',name:'Adeus / Ate logo',pergunta:'O que significa "Au revoir"?',pool:['Ola','Adeus','Obrigado','Sim'],answer:'Adeus'},{sym:'Oui',name:'Sim',pergunta:'O que significa "Oui"?',pool:['Nao','Sim','Talvez','Agora'],answer:'Sim'},
+{sym:'Non',name:'Nao',pergunta:'O que significa "Non"?',pool:['Sim','Nao','Talvez','Sempre'],answer:'Nao'},{sym:'Chat',name:'Gato',pergunta:'O que significa "Chat"?',pool:['Cachorro','Gato','Passaro','Peixe'],answer:'Gato'},
+{sym:'Chien',name:'Cachorro',pergunta:'O que significa "Chien"?',pool:['Gato','Cachorro','Passaro','Peixe'],answer:'Cachorro'},{sym:'Maison',name:'Casa',pergunta:'O que significa "Maison"?',pool:['Casa','Escola','Rua','Praca'],answer:'Casa'},
+{sym:'Eau',name:'Agua',pergunta:'O que significa "Eau"?',pool:['Fogo','Ar','Agua','Terra'],answer:'Agua'},{sym:'Pain',name:'Pao',pergunta:'O que significa "Pain"?',pool:['Bolo','Pao','Queijo','Manteiga'],answer:'Pao'},
+{sym:'Fromage',name:'Queijo',pergunta:'O que significa "Fromage"?',pool:['Leite','Queijo','Manteiga','Pao'],answer:'Queijo'},{sym:'Livre',name:'Livro',pergunta:'O que significa "Livre"?',pool:['Livre','Revista','Caderno','Papel'],answer:'Livre'},
+{sym:'École',name:'Escola',pergunta:'O que significa "École"?',pool:['Casa','Escola','Trabalho','Igreja'],answer:'Escola'},{sym:'Fleur',name:'Flor',pergunta:'O que significa "Fleur"?',pool:['Arvore','Flor','Folha','Fruto'],answer:'Flor'},
+{sym:'Soleil',name:'Sol',pergunta:'O que significa "Soleil"?',pool:['Lua','Sol','Estrela','Chuva'],answer:'Sol'},{sym:'Lune',name:'Lua',pergunta:'O que significa "Lune"?',pool:['Sol','Lua','Estrela','Nuvem'],answer:'Lua'},
+{sym:'Rouge',name:'Vermelho',pergunta:'O que significa "Rouge"?',pool:['Azul','Verde','Vermelho','Amarelo'],answer:'Vermelho'},{sym:'Blanc',name:'Branco',pergunta:'O que significa "Blanc"?',pool:['Preto','Branco','Cinza','Marrom'],answer:'Branco'},
+{sym:'Noir',name:'Preto',pergunta:'O que significa "Noir"?',pool:['Branco','Preto','Cinza','Azul'],answer:'Preto'},{sym:'Vert',name:'Verde',pergunta:'O que significa "Vert"?',pool:['Vermelho','Azul','Verde','Amarelo'],answer:'Verde'},
+{sym:'Bleu',name:'Azul',pergunta:'O que significa "Bleu"?',pool:['Verde','Vermelho','Azul','Amarelo'],answer:'Azul'}
+]},
+italiano:{label:'Italiano',info:'<strong>Alfabeto Italiano:</strong> 21 letras (sem J, K, W, X, Y). Acentuacoes: accent grave (à, è, ì, ò, ù). Sons notaveis: "GLI" como "lh", "GN" como "nh".',items:[
+{sym:'à',name:'A com accent grave',pergunta:'Qual e o acento em "à"?',pool:['Grave','Aigu','Circonflexe','Tréma'],answer:'Grave'},{sym:'è',name:'E com accent grave',pergunta:'Qual e o acento em "è"?',pool:['Grave','Aigu','Circonflexe','Tréma'],answer:'Grave'},
+{sym:'ì',name:'I com accent grave',pergunta:'Qual e o acento em "ì"?',pool:['Grave','Aigu','Circonflexe','Tréma'],answer:'Grave'},{sym:'ò',name:'O com accent grave',pergunta:'Qual e o acento em "ò"?',pool:['Grave','Aigu','Circonflexe','Tréma'],answer:'Grave'},
+{sym:'ù',name:'U com accent grave',pergunta:'Qual e o acento em "ù"?',pool:['Grave','Aigu','Circonflexe','Tréma'],answer:'Grave'},{sym:'Ciao',name:'Ola / Tchau',pergunta:'O que significa "Ciao"?',pool:['Obrigado','Ola/Tchau','Desculpa','Adeus'],answer:'Ola/Tchau'},
+{sym:'Grazie',name:'Obrigado',pergunta:'O que significa "Grazie"?',pool:['Por favor','Obrigado','Desculpa','Adeus'],answer:'Obrigado'},{sym:'Per favore',name:'Por favor',pergunta:'O que significa "Per favore"?',pool:['Obrigado','Por favor','Desculpa','Sim'],answer:'Por favor'},
+{sym:'Arrivederci',name:'Adeus / Ate logo',pergunta:'O que significa "Arrivederci"?',pool:['Ola','Adeus','Obrigado','Sim'],answer:'Adeus'},{sym:'Sì',name:'Sim',pergunta:'O que significa "Sì"?',pool:['Nao','Sim','Talvez','Agora'],answer:'Sim'},
+{sym:'No',name:'Nao',pergunta:'O que significa "No"?',pool:['Sim','Nao','Talvez','Sempre'],answer:'Nao'},{sym:'Gatto',name:'Gato',pergunta:'O que significa "Gatto"?',pool:['Cachorro','Gato','Passaro','Peixe'],answer:'Gato'},
+{sym:'Cane',name:'Cachorro',pergunta:'O que significa "Cane"?',pool:['Gato','Cachorro','Passaro','Peixe'],answer:'Cachorro'},{sym:'Casa',name:'Casa',pergunta:'O que significa "Casa"?',pool:['Casa','Escola','Rua','Praca'],answer:'Casa'},
+{sym:'Acqua',name:'Agua',pergunta:'O que significa "Acqua"?',pool:['Fogo','Ar','Agua','Terra'],answer:'Agua'},{sym:'Pane',name:'Pao',pergunta:'O que significa "Pane"?',pool:['Bolo','Pao','Queijo','Manteiga'],answer:'Pao'},
+{sym:'Formaggio',name:'Queijo',pergunta:'O que significa "Formaggio"?',pool:['Leite','Queijo','Manteiga','Pao'],answer:'Queijo'},{sym:'Libro',name:'Livro',pergunta:'O que significa "Libro"?',pool:['Livro','Revista','Caderno','Papel'],answer:'Livro'},
+{sym:'Scuola',name:'Escola',pergunta:'O que significa "Scuola"?',pool:['Casa','Escola','Trabalho','Igreja'],answer:'Escola'},{sym:'Fiore',name:'Flor',pergunta:'O que significa "Fiore"?',pool:['Arvore','Flor','Folha','Fruto'],answer:'Flor'},
+{sym:'Sole',name:'Sol',pergunta:'O que significa "Sole"?',pool:['Lua','Sol','Estrela','Chuva'],answer:'Sol'},{sym:'Luna',name:'Lua',pergunta:'O que significa "Luna"?',pool:['Sol','Lua','Estrela','Nuvem'],answer:'Lua'},
+{sym:'Rosso',name:'Vermelho',pergunta:'O que significa "Rosso"?',pool:['Azul','Verde','Vermelho','Amarelo'],answer:'Vermelho'},{sym:'Bianco',name:'Branco',pergunta:'O que significa "Bianco"?',pool:['Preto','Branco','Cinza','Marrom'],answer:'Branco'},
+{sym:'Nero',name:'Preto',pergunta:'O que significa "Nero"?',pool:['Branco','Preto','Cinza','Azul'],answer:'Preto'},{sym:'Verde',name:'Verde',pergunta:'O que significa "Verde"?',pool:['Vermelho','Azul','Verde','Amarelo'],answer:'Verde'},
+{sym:'Blu',name:'Azul',pergunta:'O que significa "Blu"?',pool:['Verde','Vermelho','Azul','Amarelo'],answer:'Azul'},{sym:'Giallo',name:'Amarelo',pergunta:'O que significa "Giallo"?',pool:['Vermelho','Azul','Verde','Amarelo'],answer:'Amarelo'},
+{sym:'Mangiare',name:'Comer',pergunta:'O que significa "Mangiare"?',pool:['Dormir','Comer','Beber','Correr'],answer:'Comer'},{sym:'Bere',name:'Beber',pergunta:'O que significa "Bere"?',pool:['Comer','Beber','Dormir','Andar'],answer:'Beber'},
+{sym:'Dormire',name:'Dormir',pergunta:'O que significa "Dormire"?',pool:['Comer','Beber','Dormir','Andar'],answer:'Dormir'},{sym:'Andare',name:'Andar',pergunta:'O que significa "Andare"?',pool:['Correr','Dormir','Beber','Andar'],answer:'Andar'},
+{sym:'Amore',name:'Amor',pergunta:'O que significa "Amore"?',pool:['Amizade','Amor','Raiva','Medo'],answer:'Amor'},{sym:'Famiglia',name:'Familia',pergunta:'O que significa "Famiglia"?',pool:['Amigo','Familia','Trabalho','Escola'],answer:'Familia'},
+{sym:'Amico',name:'Amigo',pergunta:'O que significa "Amico"?',pool:['Inimigo','Amigo','Primo','Irmao'],answer:'Amigo'},{sym:'Buongiorno',name:'Bom dia',pergunta:'O que significa "Buongiorno"?',pool:['Boa noite','Bom dia','Boa tarde','Ola'],answer:'Bom dia'},
+{sym:'Buonanotte',name:'Boa noite',pergunta:'O que significa "Buonanotte"?',pool:['Bom dia','Boa noite','Boa tarde','Ola'],answer:'Boa noite'}
+]},
+libras:{label:'Libras',info:'<strong>LIBRAS (Lingua Brasileira de Sinais):</strong> Lingua visual-espacial com estrutura gramatical propria. NAO e portugues sinalizado! Usa configuracoes de maos, pontos de articulacao, movimentos e expressoes faciais.',items:[
+{sym:'Fist (punho fechado, polegar na lateral)',name:'Letra A',pergunta:'Qual letra do alfabeto manual da Libras e a mao fechada com o polegar na lateral?',pool:['A','B','C','D'],answer:'A'},{sym:'Peace (dois dedos)',name:'Letra V',pergunta:'Qual letra do alfabeto manual da Libras sao os dedos indicador e medio estendidos?',pool:['V','U','W','K'],answer:'V'},
+{sym:'Thumbs up',name:'Aprovacao',pergunta:'Na Libras, o polegar para cima pode significar?',pool:['Letra A','Aprovacao/positivo','Nada','Letra B'],answer:'Aprovacao/positivo'},{sym:'Pointing (apontando)',name:'Pronome pessoal',pergunta:'Apontar para a pessoa em Libras indica?',pool:['Objeto','Pronome pessoal (voce)','Nada','Verbo'],answer:'Pronome pessoal (voce)'},
+{sym:'Fist (punho totalmente fechado)',name:'Letra S',pergunta:'Qual letra e o punho totalmente fechado na Libras?',pool:['A','S','I','T'],answer:'S'},{sym:'Crossed fingers',name:'Letra R',pergunta:'Qual letra e indicador e medio cruzados na Libras?',pool:['R','V','U','L'],answer:'R'},
+{sym:'Hang loose (polegar e mindinho)',name:'Letra Y/T',pergunta:'Qual letra e o polegar e o mindinho estendidos na Libras?',pool:['Y/T','I','V','W'],answer:'Y/T'},{sym:'Hand wave (mao aberta balancando)',name:'Sinal de "nao"',pergunta:'O sinal de "nao" na Libras geralmente e?',pool:['Mao aberta balancando','Polegar para cima','Punho fechado','Tres dedos'],answer:'Mao aberta balancando'},
+{sym:'I love you (polegar, indicador, mindinho)',name:'Sinal de "eu te amo"',pergunta:'O sinal de "eu te amo" na Libras e?','pool':['Polegar, indicador e mindinho','Toda a mao','So dois dedos','Punho'],answer:'Polegar, indicador e mindinho'},{sym:'Open hand (5 dedos)',name:'Letra 5',pergunta:'A mao totalmente aberta na Libras representa?',pool:['Letra 5','Nada','Letra B','Letra E'],answer:'Letra 5'},
+{sym:'Index finger (um dedo)',name:'Letra D',pergunta:'O indicador levantado sozinho na Libras e a letra?',pool:['D','I','B','G'],answer:'D'},{sym:'Two fingers horizontal',name:'Letra U/W',pergunta:'Indicador e medio juntos horizontalmente na Libras e?',pool:['U','V','W','U ou W dependendo da posicao'],answer:'U ou W dependendo da posicao'},
+{sym:'Open hand, fingers together',name:'Letra B',pergunta:'Mao aberta com dedos juntos e palma para frente na Libras e a letra?',pool:['5','B','H','G'],answer:'B'},{sym:'C shape (mao em C)',name:'Letra C',pergunta:'Mao em forma de C na Libras e a letra?',pool:['O','C','G','L'],answer:'C'},
+{sym:'OK sign',name:'Letra F',pergunta:'Polegar e indicador em circulo, outros dedos estendidos na Libras e a letra?',pool:['O','F','D','G'],answer:'F'},{sym:'Gun shape (indicador lateral, polegar cima)',name:'Letra G',pergunta:'Indicador apontando para o lado e polegar para cima na Libras e a letra?',pool:['G','H','K','R'],answer:'G'},
+{sym:'Curved index and middle',name:'Letra H',pergunta:'Indicador e medio estendidos e curvados para o lado na Libras e a letra?',pool:['H','U','G','L'],answer:'H'},{sym:'Pinky and thumb out',name:'Letra I',pergunta:'Polegar e mindinho estendidos na Libras e a letra?',pool:['I','Y','K','L'],answer:'I'},
+{sym:'L shape (polegar e indicador em L)',name:'Letra K',pergunta:'Polegar e indicador formando L, medio para cima na Libras e a letra?',pool:['K','L','G','H'],answer:'K'},{sym:'L shape (indicador e polegar em L)',name:'Letra L',pergunta:'Indicador e polegar formando L na Libras e a letra?',pool:['L','K','V','U'],answer:'L'},
+{sym:'Three fingers over thumb',name:'Letra M',pergunta:'Tres dedos sobre o polegar na Libras e a letra?',pool:['M','N','T','S'],answer:'M'},{sym:'Two fingers over thumb',name:'Letra N',pergunta:'Dois dedos sobre o polegar na Libras e a letra?',pool:['N','M','T','S'],answer:'N'},
+{sym:'O shape',name:'Letra O',pergunta:'Polegar e dedos formando O na Libras e a letra?',pool:['O','C','D','F'],answer:'O'},{sym:'P shape (mao para baixo)',name:'Letra P',pergunta:'Polegar entre indicador e medio, mao para baixo na Libras e a letra?',pool:['P','K','Q','R'],answer:'P'},
+{sym:'Q shape',name:'Letra Q',pergunta:'Indicador para cima, polegar entre os outros dedos na Libras e a letra?',pool:['Q','G','P','R'],answer:'Q'},{sym:'Crossed index and middle',name:'Letra X',pergunta:'Indicador cruzado com o medio na Libras e a letra?',pool:['X','R','V','U'],answer:'X'},
+{sym:'Z shape',name:'Letra Z',pergunta:'Polegar e indicador curvados em Z na Libras e a letra?',pool:['Z','S','C','O'],answer:'Z'},{sym:'Sobrancelhas levantadas',name:'Pergunta',pergunta:'Na Libras, sobrancelhas levantadas geralmente indicam?',pool:['Afirmacao','Pergunta','Negacao','Raiva'],answer:'Pergunta'},
+{sym:'Balancar a cabeca',name:'Negacao',pergunta:'Na Libras, balancar a cabeça indica?',pool:['Sim','Nao','Talvez','Duvida'],answer:'Nao'},{sym:'Acenar com a cabeca',name:'Afirmacao',pergunta:'Na Libras, acenar com a cabeça indica?',pool:['Sim','Nao','Talvez','Duvida'],answer:'Sim'},
+{sym:'Apontar para si',name:'Pronome "eu"',pergunta:'Apontar para si mesmo na Libras indica?',pool:['Voce','Eu','Ele/Ela','Nos'],answer:'Eu'},{sym:'Bater palmas',name:'Aplauso',pergunta:'Bater palmas na cultura surda geralmente e usado para?',pool:['Chamar atencao','Aplaudir (igual ouvintes)','Nao se usa','Pedir silencio'],answer:'Aplaudir (igual ouvintes)'},
+{sym:'Aceno de despedida',name:'Despedida',pergunta:'O aceno de despedida na Libras e?',pool:['Igual ao ouvinte','Diferente completamente','Nao existe','So com uma mao'],answer:'Igual ao ouvinte'},{sym:'Circulo incluindo a si',name:'Pronome "nos"',pergunta:'Apontar em circulo incluindo a si na Libras indica?',pool:['Eu','Voce','Nos','Eles'],answer:'Nos'},
+{sym:'Mao em L movendo',name:'Verbo "ir"',pergunta:'O sinal de "ir" na Libras geralmente usa qual configuracao?',pool:['Mao em L apontando e movendo','Punho fechado','Dois dedos','Mao aberta'],answer:'Mao em L apontando e movendo'},
+{sym:'Maos como livro aberto',name:'Verbo "ler"',pergunta:'O sinal de "ler" na Libras geralmente e?',pool:['Maos como livro aberto','Um dedo apontando','Punho','Tres dedos'],answer:'Maos como livro aberto'},
+{sym:'Mao escrevendo',name:'Verbo "escrever"',pergunta:'O sinal de "escrever" na Libras geralmente imita?',pool:['Escrever com a mao','Digitar','Ler um livro','Pintar'],answer:'Escrever com a mao'},
+{sym:'Maos levando a boca',name:'Verbo "comer"',pergunta:'O sinal de "comer" na Libras geralmente envolve?',pool:['Maos levando a boca','Punho fechado','Apenas expressao facial','Mao apontando'],answer:'Maos levando a boca'}
+]}
+};
+
+/* ===== IDIOMAS - JOGO (CORRECAO: embaralhar items E shuffled junto) ===== */
+const Idiomas={topic:null,itemOrder:[],questions:[],qIdx:0,correct:0,
+init(){const tabs=document.getElementById('idiomasTabs');tabs.innerHTML='';Object.keys(idiomasData).forEach(k=>{const b=document.createElement('button');b.className='tab-btn'+(k===this.topic?' active':'');b.textContent=idiomasData[k].label;b.onclick=()=>this.setTopic(k,b);tabs.appendChild(b)});if(!this.topic)this.topic='japones';this.setTopic('japones',tabs.querySelector('.tab-btn'))},
+setTopic(t,b){this.topic=t;b.parentElement.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('idiomasInfo').innerHTML=idiomasData[t].info;this.genQ()},
+genQ(){const items=idiomasData[this.topic].items;this.itemOrder=items.map((_,i)=>i);for(let i=this.itemOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[this.itemOrder[i],this.itemOrder[j]]=[this.itemOrder[j],this.itemOrder[i]]}this.questions=this.itemOrder.map(idx=>{const it=items[idx];const sh=shuffleOpts(it.pool,it.pool.indexOf(it.answer));return{idx:idx,sym:it.sym,name:it.name,q:it.pergunta,o:sh.o,a:sh.a}});this.qIdx=0;this.correct=0;this.renderQ()},
+renderQ(){if(this.qIdx>=this.questions.length){this.finish();return}const q=this.questions[this.qIdx];const g=document.getElementById('idiomasPlayArea');g.innerHTML=`<div class="card p-6"><div class="text-center mb-4"><div class="text-5xl mb-2">${q.sym}</div><div class="text-sm font-bold text-[var(--muted)]">${q.name||''}</div></div><p class="text-xl font-bold mb-4">${q.q}</p><div class="grid grid-cols-2 gap-3" id="idOptions"></div></div>`;const og=document.getElementById('idOptions');q.o.forEach((o,i)=>{const b=document.createElement('button');b.className='option-btn';b.textContent=o;b.onclick=()=>this.answer(i,b);og.appendChild(b)})},
+answer(i,b){const q=this.questions[this.qIdx],ok=i===q.a;document.querySelectorAll('#idOptions .option-btn').forEach((x,j)=>{x.disabled=true;if(j===q.a)x.classList.add('correct');if(j===i&&!ok)x.classList.add('wrong')});if(ok){this.correct++;addStreak();playSound('correct');const r=b.getBoundingClientRect();showXPFloat(10,r.left,r.top-20)}else{resetStreak();playSound('wrong')}setTimeout(()=>{this.qIdx++;this.renderQ()},900)},
+finish(){state.idiomas=(state.idiomas||0)+this.correct;saveState();const self=this;showResult(this.correct,this.questions.length,()=>self.genQ(),null)},
+next(){this.genQ()}
+};
+
+/* ===== TELA INICIAL ===== */
+const modes=[
+{id:'tabuada',icon:'fa-calculator',color:'var(--primary)',name:'Tabuada',desc:'Pratique todas as tabuadas de 1 a 10',progress:()=>{let d=0;for(let i=1;i<=10;i++)d+=(state.tabuada[i]||0);return{cur:d,total:100}}},
+{id:'leitura',icon:'fa-headphones',color:'var(--secondary)',name:'Leitura com Audio',desc:'Textos em PT, EN e ES com perguntas',progress:()=>({cur:state.leitura||0,total:readings.length})},
+{id:'geral',icon:'fa-graduation-cap',color:'#8B5CF6',name:'Conhecimentos Gerais',desc:'Ciencias, Biologia, Portugues, Geografia, Ingles, Espanhol, Pontuacao',progress:()=>{let c=0,t=0;Object.keys(geralData).forEach(k=>{c+=(state.geral[k]||0);t+=geralData[k].questions.length});return{cur:c,total:t}}},
+{id:'arrasta',icon:'fa-hand-pointer',color:'var(--success)',name:'Arrasta e Solta',desc:'Silabas, Vogais, Consoantes, Fonemas, Tônica, Encontros, Digrafos',progress:()=>({cur:state.arrasta||0,total:200})},
+{id:'frutas',icon:'fa-lemon',color:'var(--accent)',name:'Frutas em Ingles',desc:'Veja a fruta e escreva em ingles',progress:()=>({cur:state.frutas||0,total:fruits.length})},
+{id:'numeros',icon:'fa-hashtag',color:'var(--error)',name:'Numeros em Idiomas',desc:'Numeros de 0 a 100 em Ingles e Espanhol',progress:()=>({cur:state.numeros||0,total:50})},
+{id:'ortografia',icon:'fa-spell-check',color:'#8B5CF6',name:'Ortografia',desc:'SS, S, C, Ç, R, RR, SC, M, N com explicacoes',progress:()=>({cur:state.ortografia||0,total:135})},
+{id:'porque',icon:'fa-question-circle',color:'var(--secondary)',name:'Porque / Por que',desc:'Aprenda os 4 tipos com regras e exemplos',progress:()=>({cur:state.porque||0,total:40})},
+{id:'idiomas',icon:'fa-language',color:'#E17055',name:'Alfabetos em Idiomas',desc:'Japones (Hiragana), Frances, Italiano e Libras',progress:()=>({cur:state.idiomas||0,total:300})},
+];
+
+function renderHome(){const g=document.getElementById('modeGrid');g.innerHTML='';modes.forEach(m=>{const p=m.progress(),pct=p.total>0?Math.round(p.cur/p.total*100):0;const d=document.createElement('div');d.className='card p-6';d.innerHTML=`<div class="flex items-center gap-3 mb-3"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl" style="background:${m.color}"><i class="fas ${m.icon}"></i></div><div><div class="font-black text-lg">${m.name}</div><div class="text-xs text-[var(--muted)] font-bold">${pct}% completo</div></div></div><p class="text-sm text-[var(--muted)] mb-3 leading-relaxed">${m.desc}</p><div class="xp-bar"><div class="xp-fill" style="width:${pct}%;background:${m.color}"></div></div>`;d.onclick=()=>{if(m.id==='tabuada')Tabuada.init();else if(m.id==='leitura')Leitura.init();else if(m.id==='geral')Geral.init();else if(m.id==='arrasta')Arrasta.init();else if(m.id==='frutas')Frutas.next();else if(m.id==='numeros')Numeros.next();else if(m.id==='ortografia')Ortografia.init();else if(m.id==='porque')Porque.init();else if(m.id==='idiomas')Idiomas.init();showScreen(m.id)};g.appendChild(d)})}
+
+/* ===== INICIALIZACAO ===== */
+loadState();updateTopBar();renderHome();
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&currentScreen!=='home')showScreen(prevScreen)});
+</script>
+</body>
+</html>
